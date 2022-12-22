@@ -7,5 +7,6 @@ import (
 )
 
 func HealthCheck(c *gin.Context) {
+	c.Request.Context
 	c.String(http.StatusOK, "healthy")
 }

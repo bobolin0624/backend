@@ -1,6 +1,8 @@
 CREATE TABLE IF NOT EXISTS user (
-	id character varying(32) PRIMARY KEY,
-	name character varying(64) NOT NULL,
-	email character varying(320) UNIQUE,
-	avatar text,
+	id varchar(32) PRIMARY KEY,
+	name varchar(64) NOT NULL,
+	email varchar(320) UNIQUE,
+	avatar_url text,
+
+	google_id varchar(32) UNIQUE,
 );

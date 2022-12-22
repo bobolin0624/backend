@@ -3,7 +3,7 @@
 ## Setup Development Environment
 1. [Install Docker Desktop](https://www.docker.com/get-started/)
 2. [Download Go 1.19](https://go.dev/dl/)
-3..
+3.
 ```sh
 $ git clone git@github.com:taiwan-voting-guide/backend.git
 

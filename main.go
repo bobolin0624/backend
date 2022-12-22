@@ -1,14 +1,13 @@
 package main
 
 import (
-    "fmt"
-    "net/http"
+	"github.com/taiwan-voting-guide/backend/route"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-    http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
-        fmt.Fprintf(w, "Hello, Taiwan Voting Guide!")
-    })
-
-    http.ListenAndServe(":8080", nil)
+	r := gin.Default()
+	r.GET("/health", route.HealthCheck)
+	r.Run()
 }

@@ -3,15 +3,22 @@
 ## Setup Development Environment
 1. [Install Docker Desktop](https://www.docker.com/get-started/)
 2. [Download Go 1.19](https://go.dev/dl/)
-3. clone the repo
+3. Clone the repo
 ```sh
 $ git clone git@github.com:taiwan-voting-guide/backend.git
+$ cd backend
 ```
-4. setup postgres
+4. Setup postgres
 ```sh
-$ docker run --name postgres -e POSTGRES_PASSWORD=password -d postgres
+$ docker run \
+-v `pwd`/init.sql:/docker-entrypoint-initdb.d/init.sql:ro \
+--name pg \
+-e POSTGRES_USER=user \
+-e POSTGRES_PASSWORD=password \
+-p 5432:5432 \
+-d postgres
 ```
-5. start the server
+5. Start the server
 ```sh
 $ go run main.go 
 ```

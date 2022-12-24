@@ -13,8 +13,9 @@ $ cd backend
 $ docker run \
 -v `pwd`/init.sql:/docker-entrypoint-initdb.d/init.sql:ro \
 --name pg \
--e POSTGRES_USER=user \
+-e POSTGRES_USER=backend_user \
 -e POSTGRES_PASSWORD=password \
+-e POSTGRES_DB=tvg \
 -p 5432:5432 \
 -d postgres
 ```

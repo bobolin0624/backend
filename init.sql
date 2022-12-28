@@ -5,4 +5,6 @@ CREATE TABLE IF NOT EXISTS users (
 	avatar_url text,
 
 	google_id varchar(32) UNIQUE
+
+	active boolean NOT NULL DEFAULT true,
 );

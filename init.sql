@@ -9,32 +9,42 @@ CREATE TABLE IF NOT EXISTS users (
 	google_id varchar(32) UNIQUE,
 
 	active boolean NOT NULL DEFAULT true,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 );
 
 CREATE TABLE IF NOT EXISTS politicians (
 	id SERIAL PRIMARY KEY,
 	name varchar(64) NOT NULL,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 );
 
 CREATE TABLE IF NOT EXISTS parties (
 	id int PRIMARY KEY,
+
 	name varchar(64) NOT NULL,
-	
 	chairman varchar(64),
 	established_date date,
 	filing_date date,
-
 	main_office_address text,
 	mailing_address text,
-
 	phone_number varchar(32),
 	status smallint NOT NULL DEFAULT 0,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 );
 
 CREATE TABLE IF NOT EXISTS staging_data (
 	id SERIAL PRIMARY KEY,
 	table_name varchar(64) NOT NULL,
-	data json NOT NULL,
-	timestamp timestamp NOT NULL DEFAULT NOW(),
+	data jsonb NOT NULL,
 	status smallint NOT NULL DEFAULT 0,
+	sha256_hash bytea NOT NULL,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 );

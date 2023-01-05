@@ -1,3 +1,5 @@
+-- TODO index all the tables
+
 CREATE TABLE IF NOT EXISTS users (
 	id varchar(32) PRIMARY KEY,
 	name varchar(64) NOT NULL,
@@ -26,5 +28,13 @@ CREATE TABLE IF NOT EXISTS parties (
 	mailing_address text,
 
 	phone_number varchar(32),
+	status smallint NOT NULL DEFAULT 0,
+);
+
+CREATE TABLE IF NOT EXISTS staging_data (
+	id SERIAL PRIMARY KEY,
+	table_name varchar(64) NOT NULL,
+	data json NOT NULL,
+	timestamp timestamp NOT NULL DEFAULT NOW(),
 	status smallint NOT NULL DEFAULT 0,
 );

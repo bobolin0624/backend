@@ -2,31 +2,38 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/browser"
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
 	"github.com/extrame/xls"
+	"github.com/joho/godotenv"
+	"github.com/taiwan-voting-guide/backend/pg"
 )
 
 type Party struct {
-	id                  int
-	name                string
-	chairman            string
-	established_date    time.Time
-	filing_date         time.Time
-	main_office_address string
-	mailing_address     string
-	phone_number        string
-	status              int
+	Id                int       `json:"id"`
+	Name              string    `json:"name"`
+	Chairman          string    `json:"chairman"`
+	EstablishedDate   time.Time `json:"established_date"`
+	FilingDate        time.Time `json:"filing_date"`
+	MainOfficeAddress string    `json:"main_office_address"`
+	MailingAddress    string    `json:"mailing_address"`
+	PhoneNumber       string    `json:"phone_number"`
+	Status            int       `json:"status"`
 }
 
 func main() {
+	godotenv.Load()
+
 	tmpDir, err := ioutil.TempDir("", "chromedp-")
 	if err != nil {
 		log.Fatal(err)
@@ -91,21 +98,43 @@ func main() {
 		}
 	}
 
-	fmt.Println(parties)
+	conn, err := pg.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close(ctx)
+
+	for _, party := range parties {
+		partyJson, err := json.Marshal(party)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		hash := sha256.Sum256(partyJson)
+		_, err = conn.Exec(context.Background(), "INSERT INTO staging_data (table_name, data, sha256_hash) VALUES ($1, $2, $3)", "parties", partyJson, hash[:])
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func rowToParty(row *xls.Row) Party {
 	id, _ := strconv.Atoi(row.Col(0))
+	chairman := ""
+	if !strings.Contains(row.Col(2), "負責人") {
+		chairman = row.Col(2)
+	}
+
 	return Party{
-		id:                  id,
-		name:                row.Col(1),
-		chairman:            row.Col(2),
-// 		established_date:    row.Col(3),
-// 		filing_date:         row.Col(4),
-		main_office_address: row.Col(5),
-		mailing_address:     row.Col(6),
-		phone_number:        row.Col(7),
-		status:              statusStrToNum(row.Col(8)),
+		Id:                id,
+		Name:              row.Col(1),
+		Chairman:          chairman,
+		EstablishedDate:   ROCDateToDate(row.Col(3)),
+		FilingDate:        ROCDateToDate(row.Col(4)),
+		MainOfficeAddress: row.Col(5),
+		MailingAddress:    row.Col(6),
+		PhoneNumber:       row.Col(7),
+		Status:            statusStrToNum(row.Col(8)),
 	}
 }
 
@@ -124,4 +153,22 @@ func statusStrToNum(status string) int {
 	}
 
 	return 0
+}
+
+func ROCDateToDate(date string) time.Time {
+	year := 0
+	month := 0
+	day := 0
+
+	date = strings.TrimSpace(date)
+	date = strings.Replace(date, "前", "-", 1)
+	_, err := fmt.Sscanf(date, "民國%d年%d月%d日", &year, &month, &day)
+	if err != nil {
+		log.Println(err)
+		return time.Time{}
+	}
+
+	year += 1911
+
+	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 }

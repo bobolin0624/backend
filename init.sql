@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
 	active boolean NOT NULL DEFAULT true,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS politicians (
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS politicians (
 	name varchar(64) NOT NULL,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS parties (
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS parties (
 	status smallint NOT NULL DEFAULT 0,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS staging_data (
@@ -46,5 +46,5 @@ CREATE TABLE IF NOT EXISTS staging_data (
 	sha256_hash bytea NOT NULL,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

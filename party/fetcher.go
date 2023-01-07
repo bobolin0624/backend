@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +14,7 @@ import (
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
 	"github.com/extrame/xls"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/taiwan-voting-guide/backend/pg"
 )
@@ -110,8 +110,8 @@ func main() {
 			log.Fatal(err)
 		}
 
-		hash := sha256.Sum256(partyJson)
-		_, err = conn.Exec(context.Background(), "INSERT INTO staging_data (table_name, data, sha256_hash) VALUES ($1, $2, $3)", "parties", partyJson, hash[:])
+		groupId := uuid.New()
+		_, err = conn.Exec(context.Background(), "INSERT INTO staging_data (group_id, table_name, data) VALUES ($1, $2, $3)", groupId, "parties", partyJson)
 		if err != nil {
 			log.Fatal(err)
 		}

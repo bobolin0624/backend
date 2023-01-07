@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS legislators (
 	term smallint NOT NULL,
 	session smallint NOT NULL,
 	-- create a committee table if needed
-	committee: varchar(64) NOT NULL,
+	committee varchar(64) NOT NULL,
 	onboard_date date,
 	resign_date date,
 	resign_reason text,

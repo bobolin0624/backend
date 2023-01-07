@@ -7,6 +7,7 @@ require (
 	github.com/chromedp/chromedp v0.8.6
 	github.com/extrame/xls v0.0.2-0.20200426124601-4a6cf263071b
 	github.com/gin-gonic/gin v1.8.2
+	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.2.0
 	github.com/joho/godotenv v1.4.0
 )

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS politicians (
 	id SERIAL PRIMARY KEY,
 	name varchar(64) NOT NULL,
+	en_name varchar(64),
 	avatar_url text,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -24,10 +25,9 @@ CREATE TABLE IF NOT EXISTS politicians (
 );
 
 CREATE TABLE IF NOT EXISTS legislators (
+	politicians_id int NOT NULL REFERENCES politicians(id),
 	term smallint NOT NULL,
 	session smallint NOT NULL,
-	name varchar(64) NOT NULL,
-	enname varchar(64) NOT NULL,
 	-- create a committee table if needed
 	committee: varchar(64) NOT NULL,
 	onboard_date date,
@@ -55,11 +55,10 @@ CREATE TABLE IF NOT EXISTS parties (
 );
 
 CREATE TABLE IF NOT EXISTS staging_data (
-	id SERIAL PRIMARY KEY,
+	group_id uuid NOT NULL,
 	table_name varchar(64) NOT NULL,
 	data jsonb NOT NULL,
 	status smallint NOT NULL DEFAULT 0,
-	sha256_hash bytea NOT NULL,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP

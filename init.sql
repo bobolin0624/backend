@@ -17,6 +17,22 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS politicians (
 	id SERIAL PRIMARY KEY,
 	name varchar(64) NOT NULL,
+	avatar_url text,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS legislators (
+	term smallint NOT NULL,
+	session smallint NOT NULL,
+	name varchar(64) NOT NULL,
+	enname varchar(64) NOT NULL,
+	-- create a committee table if needed
+	committee: varchar(64) NOT NULL,
+	onboard_date date,
+	resign_date date,
+	resign_reason text,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP

@@ -55,9 +55,8 @@ CREATE TABLE IF NOT EXISTS parties (
 );
 
 CREATE TABLE IF NOT EXISTS staging_data (
-	group_id uuid NOT NULL,
-	table_name varchar(64) NOT NULL,
-	data jsonb NOT NULL,
+	id SERIAL PRIMARY KEY,
+	records jsonb NOT NULL,
 	status smallint NOT NULL DEFAULT 0,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

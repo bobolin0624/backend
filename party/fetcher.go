@@ -14,7 +14,6 @@ import (
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
 	"github.com/extrame/xls"
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/taiwan-voting-guide/backend/pg"
 )
@@ -30,6 +29,13 @@ type Party struct {
 	PhoneNumber       string    `json:"phone_number"`
 	Status            int       `json:"status"`
 }
+
+type Record struct {
+	Table  string `json:"table"`
+	Record Party  `json:"record"`
+}
+
+type Records []Record
 
 func main() {
 	godotenv.Load()
@@ -88,12 +94,15 @@ func main() {
 		log.Println(err)
 	}
 
-	parties := []Party{}
+	recordsList := []Records{}
 
 	if xlFile, err := xls.Open(tmpDir+"/"+filename, "utf-8"); err == nil {
 		if sheet := xlFile.GetSheet(0); sheet != nil {
 			for row := 0; row <= int(sheet.MaxRow); row++ {
-				parties = append(parties, rowToParty(sheet.Row(row)))
+				recordsList = append(recordsList, Records{Record{
+					Table:  "parties",
+					Record: rowToParty(sheet.Row(row)),
+				}})
 			}
 		}
 	}
@@ -104,14 +113,13 @@ func main() {
 	}
 	defer conn.Close(ctx)
 
-	for _, party := range parties {
-		partyJson, err := json.Marshal(party)
+	for _, r := range recordsList {
+		recordJson, err := json.Marshal(r)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		groupId := uuid.New()
-		_, err = conn.Exec(context.Background(), "INSERT INTO staging_data (group_id, table_name, data) VALUES ($1, $2, $3)", groupId, "parties", partyJson)
+		_, err = conn.Exec(context.Background(), "INSERT INTO staging_data (records) VALUES ($1)", recordJson)
 		if err != nil {
 			log.Fatal(err)
 		}

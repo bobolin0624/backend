@@ -16,6 +16,12 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Group("/api")
 	r.GET("/health", route.HealthCheck)
+
+	adminGroup := r.Group("/admin")
+	// TODO: add auth middleware
+	route.MountAdminRoutes(adminGroup)
+
 	r.Run()
 }

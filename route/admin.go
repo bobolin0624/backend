@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/gin-gonic/gin"
+	// "github.com/taiwan-voting-guide/backend/staging"
 )
 
 func MountAdminRoutes(rg *gin.RouterGroup) {
@@ -10,7 +11,6 @@ func MountAdminRoutes(rg *gin.RouterGroup) {
 }
 
 func listStagingDataHandler(c *gin.Context) {
-	c.JSON(501, gin.H{})
 }
 
 func submitStagingDataHandler(c *gin.Context) {

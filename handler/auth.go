@@ -1,14 +1,14 @@
-package route
+package handler
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/taiwan-voting-guide/backend/auth"
-)
+	"fmt"
 
-type GoogleAuthPayload struct {
-	Credential string `json:"credential"`
-	CSRFToken  string `json:"g_csrf_token"`
-}
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
+
+	"github.com/taiwan-voting-guide/backend/auth"
+	"github.com/taiwan-voting-guide/backend/config"
+)
 
 func MountAuthRoutes(rg *gin.RouterGroup) {
 	rg.POST("/google", googleAuthHandler)
@@ -34,7 +34,7 @@ func googleAuthHandler(c *gin.Context) {
 	credential := c.PostForm("credential")
 
 	authStore := auth.New()
-	res, err := authStore.Auth(c, &auth.Info{
+	_, err = authStore.Auth(c, &auth.Info{
 		Type: auth.TypeGoogle,
 		Google: &auth.InfoGoogle{
 			IdToken: credential,
@@ -44,8 +44,16 @@ func googleAuthHandler(c *gin.Context) {
 		c.JSON(401, err)
 	}
 
-	c.JSON(302, gin.H{
-		"res": res.Google.Payload,
-	})
+	session := sessions.Default(c)
 
+	fmt.Println(session.Get("user_id"))
+	session.Set("user_id", credential)
+	if err := session.Save(); err != nil {
+		c.JSON(500, "Failed to save session.")
+		return
+	}
+
+	c.SetCookie("session", session.ID(), 3600, "/", config.GetFrontendHost(), false, true)
+
+	c.Redirect(302, config.GetFrontendEndpoint())
 }

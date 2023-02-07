@@ -1,4 +1,4 @@
-package route
+package handler
 
 import (
 	"github.com/gin-gonic/gin"
@@ -6,8 +6,8 @@ import (
 )
 
 func MountAdminRoutes(rg *gin.RouterGroup) {
-	rg.GET("/data", listStagingDataHandler)
-	rg.POST("/data", submitStagingDataHandler)
+	rg.GET("/staging", listStagingDataHandler)
+	rg.POST("/staging", submitStagingDataHandler)
 }
 
 func listStagingDataHandler(c *gin.Context) {

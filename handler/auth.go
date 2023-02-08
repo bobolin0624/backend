@@ -53,7 +53,5 @@ func googleAuthHandler(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("session", session.ID(), 3600, "/", config.GetFrontendHost(), false, true)
-
 	c.Redirect(302, config.GetFrontendEndpoint())
 }

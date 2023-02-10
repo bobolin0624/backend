@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"google.golang.org/api/idtoken"
+
+	"github.com/taiwan-voting-guide/backend/model"
 )
 
 func New() Store {
@@ -19,9 +21,9 @@ type impl struct {
 	httpClient *http.Client
 }
 
-func (im *impl) Auth(ctx context.Context, info *Info) (*Result, error) {
+func (im *impl) Auth(ctx context.Context, info *model.AuthInfo) (*model.AuthResult, error) {
 	switch info.Type {
-	case TypeGoogle:
+	case model.AuthTypeGoogle:
 		return im.authWithGoogle(ctx, info.Google)
 	default:
 		log.Printf("unknown auth type: %d", info.Type)
@@ -29,15 +31,15 @@ func (im *impl) Auth(ctx context.Context, info *Info) (*Result, error) {
 	}
 }
 
-func (im *impl) authWithGoogle(ctx context.Context, info *InfoGoogle) (*Result, error) {
+func (im *impl) authWithGoogle(ctx context.Context, info *model.AuthInfoGoogle) (*model.AuthResult, error) {
 	payload, err := idtoken.Validate(ctx, info.IdToken, os.Getenv("GOOGLE_CLIENT_ID"))
 	if err != nil {
 		return nil, ErrTokenAudienceInvalid
 	}
 
-	return &Result{
-		Type: TypeGoogle,
-		Google: &ResultGoogle{
+	return &model.AuthResult{
+		Type: model.AuthTypeGoogle,
+		Google: &model.AuthResultGoogle{
 			Payload: payload,
 		},
 	}, nil

@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"errors"
+
+	"github.com/taiwan-voting-guide/backend/model"
 )
 
 var (
@@ -11,5 +13,5 @@ var (
 )
 
 type Store interface {
-	Auth(ctx context.Context, info *Info) (*Result, error)
+	Auth(ctx context.Context, info *model.AuthInfo) (*model.AuthResult, error)
 }

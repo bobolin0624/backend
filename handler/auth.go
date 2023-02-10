@@ -78,6 +78,7 @@ func googleAuthHandler(c *gin.Context) {
 
 func getUser(c *gin.Context) {
 	session := sessions.Default(c)
+
 	userId := session.Get("user_id")
 	if userId == nil {
 		c.JSON(http.StatusUnauthorized, "Unauthorized.")
@@ -88,6 +89,9 @@ func getUser(c *gin.Context) {
 	u, err := userStore.Get(c, userId.(string))
 	if err == user.ErrUserNotFound {
 		c.JSON(http.StatusNotFound, "User not found.")
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 

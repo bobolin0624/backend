@@ -77,7 +77,8 @@ func (im *impl) Get(ctx context.Context, id string) (*model.User, error) {
 	row := conn.QueryRow(ctx, "SELECT name, email, avatar_url, google_id FROM users WHERE id = $1", id)
 
 	var user model.User
-	if err := row.Scan(id, &user.Name, &user.Email, &user.AvatarURL, &user.GoogleId); err == pgx.ErrNoRows {
+	user.Id = id
+	if err := row.Scan(&user.Name, &user.Email, &user.AvatarURL, &user.GoogleId); err == pgx.ErrNoRows {
 		return nil, ErrUserNotFound
 	} else if err != nil {
 		log.Println(err)

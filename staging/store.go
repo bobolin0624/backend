@@ -1,7 +1,10 @@
 package staging
 
-import "context"
+import (
+	"context"
+	"github.com/taiwan-voting-guide/backend/model"
+)
 
 type Store interface {
-	List(ctx context.Context, offset, limit int) ([]*StagingData, error)
+	List(ctx context.Context, offset, limit int) ([]*model.StagingData, error)
 }

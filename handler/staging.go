@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/taiwan-voting-guide/backend/staging"
+	"github.com/taiwan-voting-guide/backend/model"
 )
 
 func MountAdminRoutes(rg *gin.RouterGroup) {
@@ -15,7 +15,7 @@ func listStagingDataHandler(c *gin.Context) {
 		"stagingData": []StagingDataRepr{
 			{
 				Id: 2,
-				Records: []staging.Record{
+				Records: []model.StagingRecord{
 					{
 						Table: "politicians",
 						Record: map[string]interface{}{
@@ -39,7 +39,7 @@ func listStagingDataHandler(c *gin.Context) {
 			},
 			{
 				Id: 1,
-				Records: []staging.Record{
+				Records: []model.StagingRecord{
 					{
 						Table: "parties",
 						Record: map[string]interface{}{
@@ -67,14 +67,14 @@ func submitStagingDataHandler(c *gin.Context) {
 }
 
 type StagingDataRepr struct {
-	Id      int              `json:"id"`
-	Records []staging.Record `json:"records"`
+	Id      int                   `json:"id"`
+	Records []model.StagingRecord `json:"records"`
 
 	CreatedAt int64 `json:"createdAt"`
 	UpdatedAt int64 `json:"updatedAt"`
 }
 
-func StagingDataToRepr(s staging.StagingData) StagingDataRepr {
+func StagingDataToRepr(s model.StagingData) StagingDataRepr {
 	return StagingDataRepr{
 		Id:      s.Id,
 		Records: s.Records,

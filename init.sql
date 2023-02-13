@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS politicians (
 	id SERIAL PRIMARY KEY,
 	name varchar(64) NOT NULL,
-	birth_date date NOT NULL,
+	birthdate date,
 	en_name varchar(64),
 	avatar_url text,
 

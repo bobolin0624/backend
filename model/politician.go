@@ -14,3 +14,9 @@ type Politician struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type PoliticianRepr struct {
+	Name      string `json:"name"`
+	Birthdate string `json:"birthdate"`
+	AvatarUrl string `json:"avatar_url"`
+}

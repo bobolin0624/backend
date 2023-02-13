@@ -7,6 +7,6 @@ import (
 )
 
 type Store interface {
-	Create(ctx context.Context, p *model.Politician) (int64, error)
+	Create(ctx context.Context, p *model.PoliticianRepr) (int64, error)
 	SearchByNameAndBirthdate(ctx context.Context, name, birthdate string) ([]*model.Politician, error)
 }

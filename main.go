@@ -34,12 +34,11 @@ func main() {
 	// public routes
 	r.GET("/health", handler.HealthCheck)
 
-	auth := r.Group("/auth")
-	handler.MountAuthRoutes(auth)
+	handler.MountAuthRoutes(r.Group("/auth"))
 
 	// authenticated routes
-	workspace := r.Group("/workspace")
-	handler.MountAdminRoutes(workspace)
+	handler.MountAdminRoutes(r.Group("/workspace"))
+	handler.MountPolitician(r.Group("/politician"))
 
 	r.Run()
 }

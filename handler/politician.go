@@ -9,6 +9,7 @@ import (
 
 func MountPolitician(rg *gin.RouterGroup) {
 	rg.POST("/", createPolitician)
+	rg.GET("/", searchPoliticianByNameAndBirthdate)
 }
 
 func createPolitician(c *gin.Context) {
@@ -18,14 +19,36 @@ func createPolitician(c *gin.Context) {
 		return
 	}
 
-	politicianStore := politician.New()
-	id, err := politicianStore.Create(c, &p)
+	_, err := politician.New().Create(c, &p)
 	if err != nil {
 		c.JSON(500, "internal server error")
 		return
 	}
 
+	c.JSON(200, nil)
+}
+
+func searchPoliticianByNameAndBirthdate(c *gin.Context) {
+	name := c.Query("name")
+	birthdate := c.Query("birthdate")
+
+	if name == "" {
+		c.JSON(400, "bad request")
+		return
+	}
+
+	politicians, err := politician.New().SearchByNameAndBirthdate(c, name, birthdate)
+	if err != nil {
+		c.JSON(500, "internal server error")
+		return
+	}
+
+	reprs := make([]*model.PoliticianRepr, len(politicians))
+	for i, p := range politicians {
+		reprs[i] = p.Repr()
+	}
+
 	c.JSON(200, gin.H{
-		"id": id,
+		"politicians": reprs,
 	})
 }

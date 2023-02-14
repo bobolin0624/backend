@@ -3,6 +3,9 @@ package politician
 import (
 	"context"
 	"log"
+	"time"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/pg"
@@ -37,5 +40,47 @@ func (im *impl) Create(ctx context.Context, p *model.PoliticianRepr) (int64, err
 }
 
 func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name, birthdate string) ([]*model.Politician, error) {
-	return nil, nil
+	conn, err := pg.Connect(ctx)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer conn.Close(ctx)
+
+	var rows pgx.Rows
+	if birthdate == "" {
+		rows, err = conn.Query(ctx, `
+		SELECT id, name, birthdate, avatar_url
+		FROM politicians
+		WHERE name = $1
+
+	`, name)
+	} else {
+		rows, err = conn.Query(ctx, `
+		SELECT id, name, birthdate, avatar_url
+		FROM politicians
+		WHERE name = $1 AND birthdate = $2
+	
+	`, name, birthdate)
+	}
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ps []*model.Politician
+	for rows.Next() {
+		var p model.Politician
+		var t time.Time
+		err = rows.Scan(&p.Id, &p.Name, &t, &p.AvatarUrl)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		p.Birthdate = t.Format("2006-01-02")
+		ps = append(ps, &p)
+	}
+
+	return ps, nil
 }

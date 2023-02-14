@@ -32,11 +32,6 @@ func searchPoliticianByNameAndBirthdate(c *gin.Context) {
 	name := c.Query("name")
 	birthdate := c.Query("birthdate")
 
-	if name == "" {
-		c.JSON(400, "bad request")
-		return
-	}
-
 	politicians, err := politician.New().SearchByNameAndBirthdate(c, name, birthdate)
 	if err != nil {
 		c.JSON(500, "internal server error")

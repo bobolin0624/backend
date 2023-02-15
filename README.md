@@ -36,4 +36,10 @@ $ go run main.go
 $ cp .env.example .env
 ```
 
+1. Init politicians testing
+
+```sh
+./scripts/init_politicians.sh
+```
+
 1. (optional) [Download pgAdmin](https://www.pgadmin.org/download/)

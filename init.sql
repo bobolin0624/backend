@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS politician_questions (
 	hidden boolean NOT NULL DEFAULT false,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+	reply_at timestamp
 );
 
 CREATE TABLE IF NOT EXISTS politician_question_likes (

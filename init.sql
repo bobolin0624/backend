@@ -62,3 +62,23 @@ CREATE TABLE IF NOT EXISTS staging_data (
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS questions (
+	id SERIAL PRIMARY KEY,
+	politician_id int NOT NULL REFERENCES politicians(id),
+	user_id varchar(32) NOT NULL REFERENCES users(id),
+
+	type varchar(32) NOT NULL,
+	question text NOT NULL,
+	reply text,
+	likes int NOT NULL DEFAULT 0,
+	hidden boolean NOT NULL DEFAULT false,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS question_likes (
+	question_id int NOT NULL REFERENCES questions(id),
+	user_id varchar(32) NOT NULL REFERENCES users(id)
+);

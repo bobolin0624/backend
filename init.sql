@@ -79,6 +79,6 @@ CREATE TABLE IF NOT EXISTS politician_questions (
 );
 
 CREATE TABLE IF NOT EXISTS politician_question_likes (
-	question_id int NOT NULL REFERENCES questions(id),
+	question_id int NOT NULL REFERENCES politician_questions(id),
 	user_id varchar(32) NOT NULL REFERENCES users(id)
 );

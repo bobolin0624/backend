@@ -1,10 +1,10 @@
 package model
 
 type PoliticianQuestionCreate struct {
-	UserId       string `json:"user_id"`
-	PoliticianId int64  `json:"politician_id"`
-	Type         string `json:"type"`
-	Question     string `json:"question"`
+	Category     string
+	UserId       string
+	Question     string
+	PoliticianId int64
 }
 
 type PoliticianQuestion struct {
@@ -12,7 +12,7 @@ type PoliticianQuestion struct {
 	PoliticianId int64
 	UserName     string
 
-	Type     string
+	Category string
 	Question string
 	Reply    string
 	Likes    int64

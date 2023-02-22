@@ -65,17 +65,18 @@ CREATE TABLE IF NOT EXISTS staging_data (
 
 CREATE TABLE IF NOT EXISTS politician_questions (
 	id SERIAL PRIMARY KEY,
-	politician_id int NOT NULL REFERENCES politicians(id),
+	category varchar(32) NOT NULL,
+
 	user_id varchar(32) NOT NULL REFERENCES users(id),
-
-	type varchar(32) NOT NULL,
 	question text NOT NULL,
-	reply text,
-	likes int NOT NULL DEFAULT 0,
-	hidden boolean NOT NULL DEFAULT false,
+	ask_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	reply_at timestamp
+	politician_id int NOT NULL REFERENCES politicians(id),
+	reply text,
+	reply_at timestamp,
+
+	likes int NOT NULL DEFAULT 0,
+	hidden boolean NOT NULL DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS politician_question_likes (

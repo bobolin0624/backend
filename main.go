@@ -12,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/taiwan-voting-guide/backend/handler"
+	"github.com/taiwan-voting-guide/backend/middleware"
 )
 
 const userSessionName = "user_session"
@@ -31,12 +32,10 @@ func main() {
 	// TODO set a proper CORS policy
 	r.Use(cors.Default())
 	r.Use(sessions.Sessions(userSessionName, store))
-	// public routes
+	r.Use(middleware.Auth())
 	r.GET("/health", handler.HealthCheck)
 
 	handler.MountAuthRoutes(r.Group("/auth"))
-
-	// authenticated routes
 	handler.MountAdminRoutes(r.Group("/workspace"))
 	handler.MountPolitician(r.Group("/politician"))
 

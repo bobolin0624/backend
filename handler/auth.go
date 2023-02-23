@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
@@ -9,13 +8,14 @@ import (
 
 	"github.com/taiwan-voting-guide/backend/auth"
 	"github.com/taiwan-voting-guide/backend/config"
+	"github.com/taiwan-voting-guide/backend/middleware"
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/user"
 )
 
 func MountAuthRoutes(rg *gin.RouterGroup) {
 	rg.POST("/google", googleAuthHandler)
-	rg.GET("/user", getUser)
+	rg.GET("/user", middleware.MustAuth(), getUser)
 }
 
 func googleAuthHandler(c *gin.Context) {
@@ -57,7 +57,6 @@ func googleAuthHandler(c *gin.Context) {
 		// create user if not exist
 		u, err = userStore.CreateByAuthResult(c, result)
 		if err != nil {
-			log.Println("***")
 			c.JSON(http.StatusInternalServerError, err)
 			return
 		}
@@ -77,16 +76,8 @@ func googleAuthHandler(c *gin.Context) {
 }
 
 func getUser(c *gin.Context) {
-	session := sessions.Default(c)
-
-	userId := session.Get("user_id")
-	if userId == nil {
-		c.JSON(http.StatusUnauthorized, "Unauthorized.")
-		return
-	}
-
 	userStore := user.New()
-	u, err := userStore.Get(c, userId.(string))
+	u, err := userStore.Get(c, c.GetString("user_id"))
 	if err == user.ErrUserNotFound {
 		c.JSON(http.StatusNotFound, "User not found.")
 		return

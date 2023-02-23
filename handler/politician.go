@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/taiwan-voting-guide/backend/middleware"
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/politician"
 	"github.com/taiwan-voting-guide/backend/politician/question"
@@ -13,23 +14,23 @@ import (
 func MountPolitician(rg *gin.RouterGroup) {
 	rg.POST("/", createPolitician)
 	rg.GET("/", searchPoliticianByNameAndBirthdate)
-	rg.POST("/ask/:politicianId", askQuestion)
+	rg.POST("/ask/:politicianId", middleware.MustAuth(), askQuestion)
 }
 
 func createPolitician(c *gin.Context) {
 	var p model.PoliticianRepr
 	if err := c.ShouldBindJSON(&p); err != nil {
-		c.JSON(400, "bad request")
+		c.Status(400)
 		return
 	}
 
 	_, err := politician.New().Create(c, &p)
 	if err != nil {
-		c.JSON(500, "internal server error")
+		c.Status(500)
 		return
 	}
 
-	c.JSON(200, nil)
+	c.Status(201)
 }
 
 func searchPoliticianByNameAndBirthdate(c *gin.Context) {
@@ -38,7 +39,7 @@ func searchPoliticianByNameAndBirthdate(c *gin.Context) {
 
 	politicians, err := politician.New().SearchByNameAndBirthdate(c, name, birthdate)
 	if err != nil {
-		c.JSON(500, "internal server error")
+		c.Status(500)
 		return
 	}
 
@@ -60,18 +61,20 @@ type AskBody struct {
 func askQuestion(c *gin.Context) {
 	var body AskBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(400, "bad request")
+		c.Status(400)
 		return
 	}
 
 	politicianId, err := strconv.ParseInt(c.Param("politicianId"), 10, 64)
 	if err != nil {
-		c.JSON(400, "bad request")
+		c.Status(400)
 		return
 	}
 
+	userId := c.GetString("user_id")
+
 	q := &model.PoliticianQuestionCreate{
-		UserId:       "TODO",
+		UserId:       userId,
 		PoliticianId: politicianId,
 		Category:     body.Category,
 		Question:     body.Question,
@@ -80,9 +83,9 @@ func askQuestion(c *gin.Context) {
 	questionStore := question.New()
 	err = questionStore.Create(c, q)
 	if err != nil {
-		c.JSON(500, "internal server error")
+		c.Status(500)
 		return
 	}
 
-	c.JSON(200, nil)
+	c.Status(201)
 }

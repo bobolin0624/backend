@@ -12,7 +12,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/taiwan-voting-guide/backend/handler"
-	"github.com/taiwan-voting-guide/backend/middleware"
+	"github.com/taiwan-voting-guide/backend/handler/middleware"
 )
 
 const userSessionName = "user_session"
@@ -36,6 +36,7 @@ func main() {
 	r.GET("/health", handler.HealthCheck)
 
 	handler.MountAuthRoutes(r.Group("/auth"))
+	handler.MountUserRoutes(r.Group("/user"))
 	handler.MountWorkspaceRoutes(r.Group("/workspace"))
 	handler.MountPolitician(r.Group("/politician"))
 

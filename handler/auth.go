@@ -8,14 +8,13 @@ import (
 
 	"github.com/taiwan-voting-guide/backend/auth"
 	"github.com/taiwan-voting-guide/backend/config"
-	"github.com/taiwan-voting-guide/backend/middleware"
+	"github.com/taiwan-voting-guide/backend/handler/middleware"
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/user"
 )
 
 func MountAuthRoutes(rg *gin.RouterGroup) {
 	rg.POST("/google", googleAuthHandler)
-	rg.GET("/user", middleware.MustAuth(), getUser)
 }
 
 func googleAuthHandler(c *gin.Context) {
@@ -66,25 +65,11 @@ func googleAuthHandler(c *gin.Context) {
 	}
 
 	session := sessions.Default(c)
-	session.Set("user_id", u.Id)
+	session.Set(middleware.UserIdKey, u.Id)
 	if err := session.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, "Failed to save session.")
 		return
 	}
 
 	c.Redirect(http.StatusTemporaryRedirect, config.GetFrontendEndpoint())
-}
-
-func getUser(c *gin.Context) {
-	userStore := user.New()
-	u, err := userStore.Get(c, c.GetString("user_id"))
-	if err == user.ErrUserNotFound {
-		c.JSON(http.StatusNotFound, "User not found.")
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, u.Repr())
 }

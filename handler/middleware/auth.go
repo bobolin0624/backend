@@ -7,10 +7,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func MustAuth() gin.HandlerFunc {
+const (
+	UserIdKey = "user_id"
+)
+
+func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetString("user_id") == "" {
-			c.AbortWithStatus(http.StatusUnauthorized)
+		if userId, exist := getSessionUserId(c); exist {
+			c.Set(UserIdKey, userId)
 			return
 		}
 
@@ -18,10 +22,10 @@ func MustAuth() gin.HandlerFunc {
 	}
 }
 
-func Auth() gin.HandlerFunc {
+func MustAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if userId, exist := getSessionUserId(c); exist {
-			c.Set("user_id", userId)
+		if c.GetString(UserIdKey) == "" {
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
@@ -31,7 +35,7 @@ func Auth() gin.HandlerFunc {
 
 func getSessionUserId(c *gin.Context) (string, bool) {
 	session := sessions.Default(c)
-	userId := session.Get("user_id")
+	userId := session.Get(UserIdKey)
 
 	if userId == nil {
 		return "", false

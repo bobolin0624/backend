@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/taiwan-voting-guide/backend/middleware"
+	"github.com/taiwan-voting-guide/backend/handler/middleware"
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/politician"
 	"github.com/taiwan-voting-guide/backend/politician/question"
@@ -73,7 +73,7 @@ func askQuestion(c *gin.Context) {
 		return
 	}
 
-	userId := c.GetString("user_id")
+	userId := c.GetString(middleware.UserIdKey)
 
 	q := &model.PoliticianQuestionCreate{
 		UserId:       userId,

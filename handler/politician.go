@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -22,17 +23,17 @@ func MountPolitician(rg *gin.RouterGroup) {
 func createPolitician(c *gin.Context) {
 	var p model.PoliticianRepr
 	if err := c.BindJSON(&p); err != nil {
-		c.Status(400)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	_, err := politician.New().Create(c, &p)
 	if err != nil {
-		c.Status(500)
+		c.Status(http.StatusInternalServerError)
 		return
 	}
 
-	c.Status(201)
+	c.Status(http.StatusCreated)
 }
 
 func searchPoliticianByNameAndBirthdate(c *gin.Context) {
@@ -41,7 +42,7 @@ func searchPoliticianByNameAndBirthdate(c *gin.Context) {
 
 	politicians, err := politician.New().SearchByNameAndBirthdate(c, name, birthdate)
 	if err != nil {
-		c.Status(500)
+		c.Status(http.StatusInternalServerError)
 		return
 	}
 
@@ -50,7 +51,7 @@ func searchPoliticianByNameAndBirthdate(c *gin.Context) {
 		reprs[i] = p.Repr()
 	}
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"politicians": reprs,
 	})
 }
@@ -63,13 +64,13 @@ type AskBody struct {
 func askQuestion(c *gin.Context) {
 	var body AskBody
 	if err := c.BindJSON(&body); err != nil {
-		c.Status(400)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	politicianId, err := strconv.ParseInt(c.Param("politicianId"), 10, 64)
 	if err != nil {
-		c.Status(400)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
@@ -85,33 +86,33 @@ func askQuestion(c *gin.Context) {
 	questionStore := question.New()
 	err = questionStore.Create(c, q)
 	if err != nil {
-		c.Status(500)
+		c.Status(http.StatusInternalServerError)
 		return
 	}
 
-	c.Status(201)
+	c.Status(http.StatusCreated)
 }
 
 func listQuestions(c *gin.Context) {
 	politicianId, err := strconv.ParseInt(c.Param("politicianId"), 10, 64)
 	if err != nil {
-		c.Status(400)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
-		c.Status(400)
+		c.Status(http.StatusBadRequest)
 	}
 	limit, err := strconv.ParseInt(c.DefaultQuery("limit", "10"), 10, 64)
 	if err != nil || limit > 100 {
-		c.Status(400)
+		c.Status(http.StatusBadRequest)
 	}
 
 	questions, err := question.New().List(c, politicianId, int(offset), int(limit))
 	if err != nil {
 		log.Println(err)
-		c.Status(500)
+		c.Status(http.StatusInternalServerError)
 		return
 	}
 
@@ -120,7 +121,7 @@ func listQuestions(c *gin.Context) {
 		reprs = append(reprs, q.Repr())
 	}
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"questions": reprs,
 	})
 }

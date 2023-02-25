@@ -80,5 +80,17 @@ CREATE TABLE IF NOT EXISTS politician_questions (
 
 CREATE TABLE IF NOT EXISTS politician_question_likes (
 	question_id int NOT NULL REFERENCES politician_questions(id),
-	user_id varchar(32) NOT NULL REFERENCES users(id)
+	user_id varchar(32) NOT NULL REFERENCES users(id),
+	PRIMARY KEY (question_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS permissions (
+	user_id varchar(32) NOT NULL REFERENCES users(id),
+	type varchar(32) NOT NULL,
+	resource varchar(32) NOT NULL,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+	PRIMARY KEY (user_id, type, resource)
 );

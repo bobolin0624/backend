@@ -43,7 +43,7 @@ func main() {
 }
 
 func initSession() (sessions.Store, error) {
-	db, err := sql.Open("postgres", os.Getenv("PG_URL")+"?sslmode=disable")
+	db, err := sql.Open("postgres", os.Getenv("PG_URL"))
 	if err != nil {
 		return nil, err
 	}

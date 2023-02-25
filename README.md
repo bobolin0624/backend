@@ -43,3 +43,7 @@ $ cp .env.example .env
 ```
 
 1. (optional) [Download pgAdmin](https://www.pgadmin.org/download/)
+
+## Troubleshoot
+
+1. *Wired db connection/schema error*: Try pulling the latest master and re-init pg.

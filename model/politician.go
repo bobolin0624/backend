@@ -28,8 +28,8 @@ func (p *Politician) Repr() *PoliticianRepr {
 type PoliticianRepr struct {
 	Name      string `json:"name"`
 	Birthdate string `json:"birthdate"`
-	AvatarUrl string `json:"avatar_url"`
+	AvatarUrl string `json:"avatarUrl"`
 
-	CreatedAt int64 `json:"created_at"`
-	UpdatedAt int64 `json:"updated_at"`
+	CreatedAt int64 `json:"createdAt"`
+	UpdatedAt int64 `json:"updatedAt"`
 }

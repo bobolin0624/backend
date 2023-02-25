@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -14,12 +15,13 @@ import (
 func MountPolitician(rg *gin.RouterGroup) {
 	rg.POST("/", createPolitician)
 	rg.GET("/", searchPoliticianByNameAndBirthdate)
-	rg.POST("/ask/:politicianId", middleware.MustAuth(), askQuestion)
+	rg.POST("/:politicianId/ask", middleware.MustAuth(), askQuestion)
+	rg.GET("/:politicianId/questions", listQuestions)
 }
 
 func createPolitician(c *gin.Context) {
 	var p model.PoliticianRepr
-	if err := c.ShouldBindJSON(&p); err != nil {
+	if err := c.BindJSON(&p); err != nil {
 		c.Status(400)
 		return
 	}
@@ -54,13 +56,13 @@ func searchPoliticianByNameAndBirthdate(c *gin.Context) {
 }
 
 type AskBody struct {
-	Category string `json:"category"`
-	Question string `json:"question"`
+	Category string `json:"category" binding:"required"`
+	Question string `json:"question" binding:"required"`
 }
 
 func askQuestion(c *gin.Context) {
 	var body AskBody
-	if err := c.ShouldBindJSON(&body); err != nil {
+	if err := c.BindJSON(&body); err != nil {
 		c.Status(400)
 		return
 	}
@@ -88,4 +90,37 @@ func askQuestion(c *gin.Context) {
 	}
 
 	c.Status(201)
+}
+
+func listQuestions(c *gin.Context) {
+	politicianId, err := strconv.ParseInt(c.Param("politicianId"), 10, 64)
+	if err != nil {
+		c.Status(400)
+		return
+	}
+
+	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
+	if err != nil {
+		c.Status(400)
+	}
+	limit, err := strconv.ParseInt(c.DefaultQuery("limit", "10"), 10, 64)
+	if err != nil || limit > 100 {
+		c.Status(400)
+	}
+
+	questions, err := question.New().List(c, politicianId, int(offset), int(limit))
+	if err != nil {
+		log.Println(err)
+		c.Status(500)
+		return
+	}
+
+	reprs := []*model.PoliticianQuestionRepr{}
+	for _, q := range questions {
+		reprs = append(reprs, q.Repr())
+	}
+
+	c.JSON(200, gin.H{
+		"questions": reprs,
+	})
 }

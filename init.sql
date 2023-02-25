@@ -69,11 +69,11 @@ CREATE TABLE IF NOT EXISTS politician_questions (
 
 	user_id varchar(32) NOT NULL REFERENCES users(id),
 	question text NOT NULL,
-	ask_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	asked_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 	politician_id int NOT NULL REFERENCES politicians(id),
 	reply text,
-	reply_at timestamp,
+	replied_at timestamp,
 
 	likes int NOT NULL DEFAULT 0,
 	hidden boolean NOT NULL DEFAULT false

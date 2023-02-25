@@ -36,7 +36,7 @@ func main() {
 	r.GET("/health", handler.HealthCheck)
 
 	handler.MountAuthRoutes(r.Group("/auth"))
-	handler.MountAdminRoutes(r.Group("/workspace"))
+	handler.MountWorkspaceRoutes(r.Group("/workspace"))
 	handler.MountPolitician(r.Group("/politician"))
 
 	r.Run()

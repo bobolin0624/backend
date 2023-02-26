@@ -26,10 +26,10 @@ func (im *impl) Create(ctx context.Context, p *model.PoliticianRepr) (int64, err
 
 	var id int64
 	err = conn.QueryRow(ctx, `
-		INSERT INTO politicians (name, birthdate, avatar_url)
-		VALUES ($1, $2, $3)
+		INSERT INTO politicians (name, birthdate, avatar_url, sex)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id
-	`, p.Name, p.Birthdate, p.AvatarUrl).Scan(&id)
+	`, p.Name, p.Birthdate, p.AvatarUrl, p.Sex).Scan(&id)
 	if err != nil {
 		log.Println(err)
 		return 0, err
@@ -81,7 +81,7 @@ func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name, birthdate st
 		args = append(args, p.Value)
 	}
 
-	rows, err := conn.Query(ctx, "SELECT id, name, birthdate, avatar_url, created_at, updated_at FROM politicians "+where, args...)
+	rows, err := conn.Query(ctx, "SELECT id, name, birthdate, avatar_url, sex, created_at, updated_at FROM politicians "+where, args...)
 
 	if err != nil {
 		log.Println(err)

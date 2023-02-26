@@ -7,14 +7,13 @@
 1. Clone the repo
 
 ```sh
-$ git clone git@github.com:taiwan-voting-guide/backend.git
-$ cd backend
+git clone git@github.com:taiwan-voting-guide/backend.git
+cd backend
 ```
-
-1. Setup postgres
+4. Setup postgres
 
 ```sh
-$ docker run \
+docker run \
 -v `pwd`/init.sql:/docker-entrypoint-initdb.d/init.sql:ro \
 --name pg \
 -e POSTGRES_USER=backend_user \
@@ -24,19 +23,21 @@ $ docker run \
 -d postgres
 ```
 
-1. Start the server
+5. Copy env file
 
 ```sh
-$ go run main.go
+cp .env.example .env
+# copy google client id from slack #tech
 ```
 
-1. Copy env file
+6. Start the server
 
 ```sh
-$ cp .env.example .env
+go run main.go
 ```
 
-1. Init politicians testing
+
+7. Init politicians testing
 
 ```sh
 ./scripts/init_politicians.sh

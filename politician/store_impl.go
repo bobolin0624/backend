@@ -98,7 +98,8 @@ func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name, birthdate st
 			log.Println(err)
 			return nil, err
 		}
-		p.Birthdate = t.Format("2006-01-02")
+		birthdate = t.Format("2006-01-02")
+		p.Birthdate = &birthdate
 		ps = append(ps, &p)
 	}
 

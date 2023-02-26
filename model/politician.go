@@ -7,7 +7,7 @@ import (
 type Politician struct {
 	Id        int64
 	Name      string
-	Birthdate string
+	Birthdate *string
 	AvatarUrl string
 	Sex       Sex
 
@@ -28,10 +28,10 @@ func (p *Politician) Repr() *PoliticianRepr {
 }
 
 type PoliticianRepr struct {
-	Name      string `json:"name"`
-	Birthdate string `json:"birthdate"`
-	AvatarUrl string `json:"avatarUrl"`
-	Sex       Sex    `json:"sex"`
+	Name      string  `json:"name"`
+	Birthdate *string `json:"birthdate"`
+	AvatarUrl string  `json:"avatarUrl"`
+	Sex       Sex     `json:"sex"`
 
 	CreatedAt int64 `json:"createdAt"`
 	UpdatedAt int64 `json:"updatedAt"`

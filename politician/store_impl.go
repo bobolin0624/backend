@@ -93,7 +93,7 @@ func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name, birthdate st
 	for rows.Next() {
 		var p model.Politician
 		var t time.Time
-		err = rows.Scan(&p.Id, &p.Name, &t, &p.AvatarUrl, &p.CreatedAt, &p.UpdatedAt)
+		err = rows.Scan(&p.Id, &p.Name, &t, &p.AvatarUrl, &p.Sex, &p.CreatedAt, &p.UpdatedAt)
 		if err != nil {
 			log.Println(err)
 			return nil, err

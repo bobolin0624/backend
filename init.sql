@@ -59,7 +59,9 @@ CREATE TABLE IF NOT EXISTS candidates (
 	area varchar(32),
 
 	-- presidential candidates
-	vice_presedenet boolean NOT NULL DEFAULT false
+	vice_president boolean NOT NULL DEFAULT false,
+
+	PRIMARY KEY (type, term, politician_id)
 ); 
 
 CREATE TABLE IF NOT EXISTS legislators (

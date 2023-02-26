@@ -39,6 +39,7 @@ func main() {
 	handler.MountUserRoutes(r.Group("/user"))
 	handler.MountWorkspaceRoutes(r.Group("/workspace"))
 	handler.MountPolitician(r.Group("/politician"))
+	handler.MountCandidate(r.Group("/candidate"))
 
 	r.Run()
 }

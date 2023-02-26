@@ -1,5 +1,7 @@
 -- TODO index all the tables
 
+CREATE TYPE sex AS ENUM ('male', 'female');
+
 CREATE TABLE IF NOT EXISTS users (
 	id varchar(32) PRIMARY KEY,
 	name varchar(64) NOT NULL,
@@ -9,30 +11,6 @@ CREATE TABLE IF NOT EXISTS users (
 	google_id varchar(32) UNIQUE,
 
 	active boolean NOT NULL DEFAULT true,
-
-	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS politicians (
-	id SERIAL PRIMARY KEY,
-	name varchar(64) NOT NULL,
-	birthdate date,
-	avatar_url text,
-
-	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS legislators (
-	politicians_id int NOT NULL REFERENCES politicians(id),
-	term smallint NOT NULL,
-	session smallint NOT NULL,
-	-- create a committee table if needed
-	committee varchar(64) NOT NULL,
-	onboard_date date,
-	resign_date date,
-	resign_reason text,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -49,6 +27,51 @@ CREATE TABLE IF NOT EXISTS parties (
 	mailing_address text,
 	phone_number varchar(32),
 	status smallint NOT NULL DEFAULT 0,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS politicians (
+	id SERIAL PRIMARY KEY,
+	name varchar(64) NOT NULL,
+	birthdate date,
+	avatar_url text,
+	sex sex,
+
+	current_party_id int REFERENCES parties(id),
+
+	meta jsonb,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS candidates (
+	type varchar(32) NOT NULL,
+	term int NOT NULL,
+	politician_id int NOT NULL REFERENCES politicians(id),
+	number int NOT NULL,
+	elected boolean NOT NULL DEFAULT false,
+
+	party_id int REFERENCES parties(id),
+
+	area varchar(32),
+
+	-- presidential candidates
+	vice_presedenet boolean NOT NULL DEFAULT false
+); 
+
+CREATE TABLE IF NOT EXISTS legislators (
+	politicians_id int NOT NULL REFERENCES politicians(id),
+	party_id int REFERENCES parties(id),
+	term smallint NOT NULL,
+	session smallint NOT NULL,
+	-- create a committee table if needed
+	committee varchar(64) NOT NULL,
+	onboard_date date,
+	resign_date date,
+	resign_reason text,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP

@@ -18,6 +18,7 @@ func MountPolitician(rg *gin.RouterGroup) {
 	rg.GET("/", searchPoliticianByNameAndBirthdate)
 	rg.POST("/:politicianId/ask", middleware.MustAuth(), askQuestion)
 	rg.GET("/:politicianId/questions", listQuestions)
+	rg.GET("/:politicianId/candidates", listCandidates)
 }
 
 func createPolitician(c *gin.Context) {
@@ -123,5 +124,39 @@ func listQuestions(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"questions": reprs,
+	})
+}
+
+func listCandidates(c *gin.Context) {
+	politicianId, err := strconv.ParseInt(c.Param("politicianId"), 10, 64)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+	}
+	limit, err := strconv.ParseInt(c.DefaultQuery("limit", "10"), 10, 64)
+	if err != nil || limit > 100 {
+		c.Status(http.StatusBadRequest)
+	}
+
+	// TODO: use Candidates store
+	questions, err := question.New().List(c, politicianId, int(offset), int(limit))
+	if err != nil {
+		log.Println(err)
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	reprs := []*model.PoliticianQuestionRepr{}
+	for _, q := range questions {
+		reprs = append(reprs, q.Repr())
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"candidates": reprs,
 	})
 }

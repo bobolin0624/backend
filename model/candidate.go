@@ -33,13 +33,14 @@ type CandidateLyRepr struct {
 
 func (c *CandidateLyRepr) Model() *Candidate {
 	return &Candidate{
-		Type:         c.Type,
-		Term:         c.Term,
-		PoliticianId: c.PoliticianId,
-		Number:       c.Number,
-		Elected:      c.Elected,
-		PartyId:      c.PartyId,
-		Area:         c.Area,
+		Type:          c.Type,
+		Term:          c.Term,
+		PoliticianId:  c.PoliticianId,
+		Number:        c.Number,
+		Elected:       c.Elected,
+		PartyId:       c.PartyId,
+		Area:          c.Area,
+		VicePresident: false,
 	}
 }
 

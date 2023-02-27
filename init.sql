@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS parties (
 	main_office_address text,
 	mailing_address text,
 	phone_number varchar(32),
-	status smallint NOT NULL DEFAULT 0,
+	status varchar(32),
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP

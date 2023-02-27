@@ -8,6 +8,6 @@ import (
 
 type Store interface {
 	Create(ctx context.Context, q *model.PoliticianQuestionCreate) error
-	List(ctx context.Context, politicianId int64, offset, limit int) ([]*model.PoliticianQuestion, error)
-	Search(ctx context.Context, politicianId int64, typ string) ([]*model.PoliticianQuestion, error)
+	List(ctx context.Context, politicianId int, offset, limit int) ([]*model.PoliticianQuestion, error)
+	Search(ctx context.Context, politicianId int, typ string) ([]*model.PoliticianQuestion, error)
 }

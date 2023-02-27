@@ -31,11 +31,11 @@ func (im *impl) Create(ctx context.Context, q *model.PoliticianQuestionCreate) e
 	return nil
 }
 
-func (im *impl) Search(ctx context.Context, politicianId int64, typ string) ([]*model.PoliticianQuestion, error) {
+func (im *impl) Search(ctx context.Context, politicianId int, typ string) ([]*model.PoliticianQuestion, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (im *impl) List(ctx context.Context, politicianId int64, offset, limit int) ([]*model.PoliticianQuestion, error) {
+func (im *impl) List(ctx context.Context, politicianId int, offset, limit int) ([]*model.PoliticianQuestion, error) {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return nil, err

@@ -50,7 +50,7 @@ func submitStagingData(c *gin.Context) {
 	}
 
 	stagingStore := staging.New()
-	if err := stagingStore.Submit(c, id); err != nil {
+	if err := stagingStore.Submit(c, int(id)); err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}

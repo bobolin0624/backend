@@ -21,8 +21,8 @@ const (
 	ResourceStaging Resource = "staging"
 )
 
-func GetPoliticianResource(id int64) Resource {
-	return Resource("politician:" + strconv.FormatInt(id, 10))
+func GetPoliticianResource(id int) Resource {
+	return Resource("politician:" + strconv.FormatInt(int64(id), 10))
 }
 
 type Action string

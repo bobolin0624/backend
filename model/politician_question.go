@@ -8,22 +8,22 @@ type PoliticianQuestionCreate struct {
 	Category     string
 	UserId       string
 	Question     string
-	PoliticianId int64
+	PoliticianId int
 }
 
 type PoliticianQuestion struct {
-	Id       int64
+	Id       int
 	Category string
 
 	UserName string
 	Question string
 	AskedAt  time.Time
 
-	PoliticianId int64
+	PoliticianId int
 	Reply        *string
 	RepliedAt    *time.Time
 
-	Likes int64
+	Likes int
 }
 
 type PoliticianQuestionRepr struct {
@@ -37,7 +37,7 @@ type PoliticianQuestionRepr struct {
 	Reply     string `json:"reply"`
 	RepliedAt int64  `json:"repliedAt"`
 
-	Likes int64 `json:"likes"`
+	Likes int `json:"likes"`
 }
 
 func (pq *PoliticianQuestion) Repr() *PoliticianQuestionRepr {

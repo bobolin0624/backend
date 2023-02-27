@@ -79,7 +79,7 @@ func askQuestion(c *gin.Context) {
 
 	q := &model.PoliticianQuestionCreate{
 		UserId:       userId,
-		PoliticianId: politicianId,
+		PoliticianId: int(politicianId),
 		Category:     body.Category,
 		Question:     body.Question,
 	}
@@ -110,7 +110,7 @@ func listQuestions(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 	}
 
-	questions, err := question.New().List(c, politicianId, int(offset), int(limit))
+	questions, err := question.New().List(c, int(politicianId), int(offset), int(limit))
 	if err != nil {
 		log.Println(err)
 		c.Status(http.StatusInternalServerError)
@@ -143,8 +143,7 @@ func listCandidates(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 	}
 
-	// TODO: use Candidates store
-	questions, err := question.New().List(c, politicianId, int(offset), int(limit))
+	questions, err := question.New().List(c, int(politicianId), int(offset), int(limit))
 	if err != nil {
 		log.Println(err)
 		c.Status(http.StatusInternalServerError)

@@ -16,7 +16,7 @@ func New() Store {
 
 type impl struct{}
 
-func (im *impl) Create(ctx context.Context, p *model.PoliticianRepr) (int64, error) {
+func (im *impl) Create(ctx context.Context, p *model.PoliticianRepr) (int, error) {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		log.Println(err)
@@ -24,7 +24,7 @@ func (im *impl) Create(ctx context.Context, p *model.PoliticianRepr) (int64, err
 	}
 	defer conn.Close(ctx)
 
-	var id int64
+	var id int
 	err = conn.QueryRow(ctx, `
 		INSERT INTO politicians (name, birthdate, avatar_url, sex)
 		VALUES ($1, $2, $3, $4)

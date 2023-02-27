@@ -5,7 +5,7 @@ import (
 )
 
 type Politician struct {
-	Id        int64
+	Id        int
 	Name      string
 	Birthdate *string
 	AvatarUrl string

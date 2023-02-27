@@ -43,7 +43,7 @@ func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.StagingDat
 	return stagingData, nil
 }
 
-func (s *impl) Submit(ctx context.Context, id int64) error {
+func (s *impl) Submit(ctx context.Context, id int) error {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return err

@@ -6,6 +6,7 @@ import (
 )
 
 type Store interface {
-	List(ctx context.Context, offset, limit int) ([]*model.StagingData, error)
+	Create(ctx context.Context, record *model.StagingDataCreateRecord) error
 	Submit(ctx context.Context, id int) error
+	List(ctx context.Context, offset, limit int) ([]*model.StagingData, error)
 }

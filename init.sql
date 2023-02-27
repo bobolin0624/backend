@@ -79,14 +79,6 @@ CREATE TABLE IF NOT EXISTS legislators (
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS staging_data (
-	id SERIAL PRIMARY KEY,
-	records jsonb NOT NULL,
-
-	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS politician_questions (
 	id SERIAL PRIMARY KEY,
 	category varchar(32) NOT NULL,
@@ -119,3 +111,12 @@ CREATE TABLE IF NOT EXISTS permissions (
 
 	PRIMARY KEY (user_id, resource, action)
 );
+
+CREATE TABLE IF NOT EXISTS staging_data (
+	id SERIAL PRIMARY KEY,
+	records jsonb NOT NULL,
+
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+

@@ -12,6 +12,7 @@ import (
 func MountWorkspaceRoutes(rg *gin.RouterGroup) {
 	rg.GET("/staging", listStagingData)
 	rg.POST("/staging/:id", submitStagingData)
+	rg.POST("/staging", createStagingData)
 }
 
 func listStagingData(c *gin.Context) {
@@ -74,4 +75,20 @@ func StagingDataToRepr(s model.StagingData) StagingDataRepr {
 		CreatedAt: s.CreatedAt.Unix(),
 		UpdatedAt: s.UpdatedAt.Unix(),
 	}
+}
+
+func createStagingData(c *gin.Context) {
+	var body model.StagingDataCreateRecord
+	if err := c.BindJSON(&body); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	stagingStore := staging.New()
+	if err := stagingStore.Create(c, &body); err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusCreated)
 }

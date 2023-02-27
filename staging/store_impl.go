@@ -2,6 +2,7 @@ package staging
 
 import (
 	"context"
+	"errors"
 
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/pg"
@@ -13,6 +14,14 @@ func New() Store {
 
 type impl struct{}
 
+func (s *impl) Create(ctx context.Context, record *model.StagingDataCreateRecord) error {
+	// Check if exist and return id and flag it update. If not flag it create.
+	// Search for fields that needs searching for ids. If not found return failed.
+	// Create fields and flags and insert into staging_data.
+	return errors.New("TODO")
+}
+
+// TODO refactor
 func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.StagingData, error) {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
@@ -43,6 +52,7 @@ func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.StagingDat
 	return stagingData, nil
 }
 
+// TODO refactor
 func (s *impl) Submit(ctx context.Context, id int) error {
 	conn, err := pg.Connect(ctx)
 	if err != nil {

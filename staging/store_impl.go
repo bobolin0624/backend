@@ -3,6 +3,10 @@ package staging
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log"
+	"sort"
+	"strings"
 
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/pg"
@@ -16,9 +20,39 @@ type impl struct{}
 
 func (s *impl) Create(ctx context.Context, record *model.StagingDataCreateRecord) error {
 	// Check if exist and return id and flag it update. If not flag it create.
+	conn, err := pg.Connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close(ctx)
+
+	id := 0
+	query, args := createSearchByQuery(record.Table, record.SearchBy)
+	if err := conn.QueryRow(ctx, query, args...).Scan(&id); err != nil {
+		log.Println(err)
+	}
+
 	// Search for fields that needs searching for ids. If not found return failed.
-	// Create fields and flags and insert into staging_data.
+	// Create fields and flags and insert into staging_data if some fields changes
 	return errors.New("TODO")
+}
+
+func createSearchByQuery(table string, searchBy model.StagingDataSearchBy) (string, []any) {
+	where := []string{}
+	args := []any{table}
+	i := 2
+	keys := []string{}
+	for k := range searchBy {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		where = append(where, fmt.Sprintf("$%d = $%d", i, i+1))
+		args = append(args, k, searchBy[k])
+		i += 2
+	}
+	query := "SELECT id FROM $1 WHERE " + strings.Join(where, " AND ")
+	return query, args
 }
 
 // TODO refactor

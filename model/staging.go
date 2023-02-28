@@ -2,12 +2,10 @@ package model
 
 import "time"
 
-
-
 type StagingDataCreateRecord struct {
-	Table    string         `json:"table"`
-	SearchBy map[string]any `json:"searchBy"`
-	Fields   map[string]any `json:"fields"`
+	Table    string              `json:"table"`
+	SearchBy StagingDataSearchBy `json:"searchBy"`
+	Fields   map[string]any      `json:"fields"`
 }
 
 type StagingDataSearchBy map[string]any

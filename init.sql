@@ -114,7 +114,9 @@ CREATE TABLE IF NOT EXISTS permissions (
 
 CREATE TABLE IF NOT EXISTS staging_data (
 	id SERIAL PRIMARY KEY,
-	records jsonb NOT NULL,
+	table varchar(32) NOT NULL,
+	fields jsonb NOT NULL,
+	action varchar(32) NOT NULL,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP

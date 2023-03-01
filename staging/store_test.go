@@ -9,13 +9,13 @@ import (
 func TestCreateSearchByQuery(t *testing.T) {
 	tests := []struct {
 		table         string
-		searchBy      model.StagingDataSearchBy
+		searchBy      model.StagingSearchBy
 		expectedQuery string
 		expectedArgs  []any
 	}{
 		{
 			table: "party",
-			searchBy: model.StagingDataSearchBy{
+			searchBy: model.StagingSearchBy{
 				"name": "KMT",
 			},
 			expectedQuery: "SELECT id FROM $1 WHERE $2 = $3",
@@ -23,7 +23,7 @@ func TestCreateSearchByQuery(t *testing.T) {
 		},
 		{
 			table: "politician",
-			searchBy: model.StagingDataSearchBy{
+			searchBy: model.StagingSearchBy{
 				"name": "蔡英文",
 				"num":  2,
 			},

@@ -3,11 +3,11 @@ package staging
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
-	"sort"
-	"strings"
 
+	// "github.com/jackc/pgx/v5"
+
+	"github.com/jackc/pgx"
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/pg"
 )
@@ -18,7 +18,10 @@ func New() Store {
 
 type impl struct{}
 
-func (s *impl) Create(ctx context.Context, record *model.StagingDataCreateRecord) error {
+func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
+	if !record.Valid() {
+		return ErrorStagingBadInput
+	}
 	// Check if exist and return id and flag it update. If not flag it create.
 	conn, err := pg.Connect(ctx)
 	if err != nil {
@@ -26,10 +29,13 @@ func (s *impl) Create(ctx context.Context, record *model.StagingDataCreateRecord
 	}
 	defer conn.Close(ctx)
 
-	id := 0
-	query, args := createSearchByQuery(record.Table, record.SearchBy)
-	if err := conn.QueryRow(ctx, query, args...).Scan(&id); err != nil {
+	staging := model.Staging{}
+	_, selects, query, args := record.CreateQuery()
+	if err := conn.QueryRow(ctx, query, args...).Scan(selects...); err == pgx.ErrNoRows {
+		staging.Action = model.StagingActionCreate
+	} else if err != nil {
 		log.Println(err)
+		return err
 	}
 
 	// Search for fields that needs searching for ids. If not found return failed.
@@ -37,26 +43,8 @@ func (s *impl) Create(ctx context.Context, record *model.StagingDataCreateRecord
 	return errors.New("TODO")
 }
 
-func createSearchByQuery(table string, searchBy model.StagingDataSearchBy) (string, []any) {
-	where := []string{}
-	args := []any{table}
-	i := 2
-	keys := []string{}
-	for k := range searchBy {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		where = append(where, fmt.Sprintf("$%d = $%d", i, i+1))
-		args = append(args, k, searchBy[k])
-		i += 2
-	}
-	query := "SELECT id FROM $1 WHERE " + strings.Join(where, " AND ")
-	return query, args
-}
-
-// TODO refactor
-func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.StagingData, error) {
+// TODO add diff
+func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.Staging, error) {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return nil, err
@@ -64,7 +52,7 @@ func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.StagingDat
 	defer conn.Close(ctx)
 
 	rows, err := conn.Query(ctx, `
-		SELECT id, records, created_at, updated_at
+		SELECT id, table, fields, action, created_at, updated_at
 		FROM staging_data
 		ORDER BY id DESC
 		OFFSET $1 LIMIT $2
@@ -73,17 +61,17 @@ func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.StagingDat
 		return nil, err
 	}
 
-	stagingData := []*model.StagingData{}
+	staging := []*model.Staging{}
 	for rows.Next() {
-		var s model.StagingData
-		if err := rows.Scan(&s.Id, &s.Records, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		var s model.Staging
+		if err := rows.Scan(&s.Id, &s.Table, &s.Fields, &s.Action, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			return nil, err
 		}
 
-		stagingData = append(stagingData, &s)
+		staging = append(staging, &s)
 	}
 
-	return stagingData, nil
+	return staging, nil
 }
 
 // TODO refactor

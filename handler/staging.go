@@ -10,12 +10,12 @@ import (
 )
 
 func MountWorkspaceRoutes(rg *gin.RouterGroup) {
-	rg.GET("/staging", listStagingData)
-	rg.POST("/staging/:id", submitStagingData)
-	rg.POST("/staging", createStagingData)
+	rg.GET("/staging", listStaging)
+	rg.POST("/staging/:id", submitStaging)
+	rg.POST("/staging", createStaging)
 }
 
-func listStagingData(c *gin.Context) {
+func listStaging(c *gin.Context) {
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
 		c.Status(http.StatusBadRequest)
@@ -26,23 +26,18 @@ func listStagingData(c *gin.Context) {
 	}
 
 	stagingStore := staging.New()
-	stagingData, err := stagingStore.List(c, int(offset), int(limit))
+	staging, err := stagingStore.List(c, int(offset), int(limit))
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
 
-	repr := []StagingDataRepr{}
-	for _, s := range stagingData {
-		repr = append(repr, StagingDataToRepr(*s))
-	}
-
 	c.JSON(200, gin.H{
-		"stagingData": repr,
+		"staging": staging,
 	})
 }
 
-func submitStagingData(c *gin.Context) {
+func submitStaging(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -59,33 +54,21 @@ func submitStagingData(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-type StagingDataRepr struct {
-	Id      int                   `json:"id"`
-	Records []model.StagingRecord `json:"records"`
-
-	CreatedAt int64 `json:"createdAt"`
-	UpdatedAt int64 `json:"updatedAt"`
-}
-
-func StagingDataToRepr(s model.StagingData) StagingDataRepr {
-	return StagingDataRepr{
-		Id:      s.Id,
-		Records: s.Records,
-
-		CreatedAt: s.CreatedAt.Unix(),
-		UpdatedAt: s.UpdatedAt.Unix(),
-	}
-}
-
-func createStagingData(c *gin.Context) {
-	var body model.StagingDataCreateRecord
+func createStaging(c *gin.Context) {
+	var body model.StagingCreate
 	if err := c.BindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	stagingStore := staging.New()
-	if err := stagingStore.Create(c, &body); err != nil {
+	if err := stagingStore.Create(c, &body); err == staging.ErrorStagingBadInput {
+		c.Status(http.StatusBadRequest)
+		return
+	} else if err == staging.ErrorStagingNoChange {
+		c.Status(http.StatusNotModified)
+		return
+	} else if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}

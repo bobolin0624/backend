@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -18,7 +19,7 @@ func MountUserRoutes(rg *gin.RouterGroup) {
 func getUser(c *gin.Context) {
 	userStore := user.New()
 	u, err := userStore.Get(c, c.GetString(middleware.UserIdKey))
-	if err == user.ErrUserNotFound {
+	if errors.Is(err, user.ErrUserNotFound) {
 		c.Status(http.StatusNotFound)
 		return
 	} else if err != nil {

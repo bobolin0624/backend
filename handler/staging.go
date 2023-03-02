@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -62,10 +63,10 @@ func createStaging(c *gin.Context) {
 	}
 
 	stagingStore := staging.New()
-	if err := stagingStore.Create(c, &body); err == staging.ErrorStagingBadInput {
+	if err := stagingStore.Create(c, &body); errors.Is(err, staging.ErrorStagingBadInput) {
 		c.Status(http.StatusBadRequest)
 		return
-	} else if err == staging.ErrorStagingNoChange {
+	} else if errors.Is(err, staging.ErrorStagingNoChange) {
 		c.Status(http.StatusNotModified)
 		return
 	} else if err != nil {

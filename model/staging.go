@@ -13,20 +13,11 @@ type StagingCreate struct {
 	Fields   StagingCreateFields   `json:"fields"`
 }
 
-var (
-	stagingPrimaryKey = map[StagingTable][]string{
-		StagingCreateTableParties:     {"id"},
-		StagingCreateTablePoliticians: {"id"},
-		StagingCreateTableCandidates:  {},
-		StagingCreateTableLegislators: {"id"},
-	}
-)
-
 func (r *StagingCreate) Valid() bool {
 	return r.Table.Valid() && r.SearchBy.Valid() && r.Fields.Valid()
 }
 
-func (r *StagingCreate) CreateQuery() ([]string, []any, string, []any) {
+func (r *StagingCreate) Query() ([]string, []any, string, []any) {
 	where := []string{}
 	args := []any{}
 	i := 1
@@ -41,8 +32,8 @@ func (r *StagingCreate) CreateQuery() ([]string, []any, string, []any) {
 		i += 1
 	}
 
-	query := fmt.Sprintf("SELECT id FROM %s WHERE "+strings.Join(where, " AND "), r.Table)
 	pks, selects := r.Table.CreatePrimaryKeyVars()
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE "+strings.Join(where, " AND "), strings.Join(pks, ", "), r.Table)
 	return pks, selects, query, args
 }
 
@@ -126,8 +117,8 @@ const (
 type Staging struct {
 	Id     int            `json:"id"`
 	Table  StagingTable   `json:"table"`
-	Fields map[string]any `json:"fields"`
 	Action StagingAction  `json:"action"`
+	Fields map[string]any `json:"fields"`
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`

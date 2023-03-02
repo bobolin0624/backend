@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"log"
 	"strings"
 
@@ -78,7 +79,7 @@ func (im *impl) Get(ctx context.Context, id string) (*model.User, error) {
 
 	var user model.User
 	user.Id = id
-	if err := row.Scan(&user.Name, &user.Email, &user.AvatarURL, &user.GoogleId); err == pgx.ErrNoRows {
+	if err := row.Scan(&user.Name, &user.Email, &user.AvatarURL, &user.GoogleId); errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrUserNotFound
 	} else if err != nil {
 		log.Println(err)
@@ -108,7 +109,7 @@ func getByAuthResultGoogle(ctx context.Context, result *model.AuthResultGoogle) 
 	row := conn.QueryRow(ctx, "SELECT id, name, email, avatar_url FROM users WHERE google_id = $1", result.Payload.Subject)
 
 	var user model.User
-	if err := row.Scan(&user.Id, &user.Name, &user.Email, &user.AvatarURL); err == pgx.ErrNoRows {
+	if err := row.Scan(&user.Id, &user.Name, &user.Email, &user.AvatarURL); errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrUserNotFound
 	} else if err != nil {
 		log.Println(err)

@@ -2,10 +2,10 @@ package staging
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
-
-	// "github.com/jackc/pgx/v5"
 
 	"github.com/jackc/pgx"
 	"github.com/taiwan-voting-guide/backend/model"
@@ -22,25 +22,98 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 	if !record.Valid() {
 		return ErrorStagingBadInput
 	}
-	// Check if exist and return id and flag it update. If not flag it create.
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Close(ctx)
 
-	staging := model.Staging{}
-	_, selects, query, args := record.CreateQuery()
-	if err := conn.QueryRow(ctx, query, args...).Scan(selects...); err == pgx.ErrNoRows {
-		staging.Action = model.StagingActionCreate
-	} else if err != nil {
+	staging := model.Staging{
+		Table:  record.Table,
+		Action: model.StagingActionCreate,
+		Fields: record.Fields,
+	}
+
+	// Check if the record exist.
+	pks, selects, query, args := record.Query()
+	if err = conn.QueryRow(ctx, query, args...).Scan(selects...); err != nil && errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
+
+	// Insert primary keys to fields if the record exist.
+	if err == nil {
+		// Mark the record as update.
+		staging.Action = model.StagingActionUpdate
+		for i, pk := range pks {
+			switch selects[i].(type) {
+			case *string:
+				staging.Fields[pk] = *selects[i].(*string)
+			case *int:
+				staging.Fields[pk] = *selects[i].(*int)
+			default:
+				log.Printf("pk: %s, value: %v", pk, selects[i])
+				return ErrorStagingBadInput
+			}
+		}
+	}
+
+	// Insert the rest of the fields. If the field is a search pattern, then we search for the primary keys.
+	for k, v := range record.Fields {
+		switch v.(type) {
+		case map[string]any:
+			fieldJSON, err := json.Marshal(v)
+			if err != nil {
+				log.Println(err)
+				return ErrorStagingBadInput
+			}
+			var r model.StagingCreate
+			if err := json.Unmarshal(fieldJSON, &r); err != nil {
+				log.Println(err)
+				return ErrorStagingBadInput
+			}
+
+			if !r.Valid() {
+				log.Printf("%v: %v\n", k, v)
+				return ErrorStagingBadInput
+			}
+
+			pks, selects, query, args := r.Query()
+			if err := conn.QueryRow(ctx, query, args...).Scan(selects...); errors.Is(err, pgx.ErrNoRows) {
+				return ErrorStagingFieldDepNotExist
+			} else if err != nil {
+				log.Println(err)
+				return err
+			}
+
+			for _, pk := range pks {
+				staging.Fields[k] = pk
+			}
+		case string:
+		case int:
+		default:
+			log.Printf("%v: %v\n", k, v)
+			return ErrorStagingBadInput
+		}
+	}
+
+	fieldsJSON, err := json.Marshal(staging.Fields)
+	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	// Search for fields that needs searching for ids. If not found return failed.
-	// Create fields and flags and insert into staging_data if some fields changes
-	return errors.New("TODO")
+	fmt.Println(string(fieldsJSON))
+	fmt.Println(staging.Action)
+	fmt.Println(staging.Table)
+	if _, err := conn.Exec(ctx, `
+		INSERT INTO staging_data (table_name, action, fields)
+		VALUES ($1, $2, $3)
+	`, staging.Table, staging.Action, fieldsJSON); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
 }
 
 // TODO add diff

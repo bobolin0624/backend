@@ -55,7 +55,7 @@ func (im *impl) List(ctx context.Context, politicianId int, offset, limit int) (
 	if err != nil {
 		return nil, err
 	}
-		
+
 	questions := []*model.PoliticianQuestion{}
 	for rows.Next() {
 		q := model.PoliticianQuestion{}

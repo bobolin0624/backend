@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
@@ -52,7 +53,7 @@ func googleAuthHandler(c *gin.Context) {
 	// check if user exist
 	userStore := user.New()
 	u, err := userStore.GetByAuthResult(c, result)
-	if err == user.ErrUserNotFound {
+	if errors.Is(err, user.ErrUserNotFound) {
 		// create user if not exist
 		u, err = userStore.CreateByAuthResult(c, result)
 		if err != nil {

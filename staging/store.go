@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrorStagingNoChange = errors.New("staging data no change")
-	ErrorStagingBadInput = errors.New("staging data bad input")
+	ErrorStagingNoChange         = errors.New("staging data no change")
+	ErrorStagingBadInput         = errors.New("staging data bad input")
+	ErrorStagingFieldDepNotExist = errors.New("staging data field dependency not exists")
 )
 
 type Store interface {

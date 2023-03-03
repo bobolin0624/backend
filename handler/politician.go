@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -41,7 +42,13 @@ func searchPoliticianByNameAndBirthdate(c *gin.Context) {
 	name := c.Query("name")
 	birthdate := c.Query("birthdate")
 
-	politicians, err := politician.New().SearchByNameAndBirthdate(c, name, birthdate)
+	var birthdateTime *time.Time
+	if birthdate != "" {
+		t, _ := time.Parse("2006-01-02", birthdate)
+		birthdateTime = &t
+	}
+
+	politicians, err := politician.New().SearchByNameAndBirthdate(c, name, birthdateTime)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return

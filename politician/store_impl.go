@@ -43,7 +43,7 @@ type SearchByNameAndBirthdateParams struct {
 	Value interface{}
 }
 
-func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name, birthdate string) ([]*model.Politician, error) {
+func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name string, birthdate *time.Time) ([]*model.Politician, error) {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		log.Println(err)
@@ -58,10 +58,10 @@ func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name, birthdate st
 			Value: name,
 		})
 	}
-	if birthdate != "" {
+	if birthdate != nil {
 		params = append(params, SearchByNameAndBirthdateParams{
 			Name:  "birthdate",
-			Value: birthdate,
+			Value: *birthdate,
 		})
 	}
 
@@ -92,14 +92,11 @@ func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name, birthdate st
 	var ps []*model.Politician
 	for rows.Next() {
 		var p model.Politician
-		var t time.Time
-		err = rows.Scan(&p.Id, &p.Name, &t, &p.AvatarUrl, &p.Sex, &p.CreatedAt, &p.UpdatedAt)
+		err = rows.Scan(&p.Id, &p.Name, &p.Birthdate, &p.AvatarUrl, &p.Sex, &p.CreatedAt, &p.UpdatedAt)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
-		birthdate = t.Format("2006-01-02")
-		p.Birthdate = &birthdate
 		ps = append(ps, &p)
 	}
 

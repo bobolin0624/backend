@@ -61,22 +61,24 @@ CREATE TABLE IF NOT EXISTS candidates (
 	-- presidential candidates
 	vice_president boolean NOT NULL DEFAULT false,
 
+	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+
 	PRIMARY KEY (type, term, politician_id)
 ); 
 
 CREATE TABLE IF NOT EXISTS legislators (
 	politicians_id int NOT NULL REFERENCES politicians(id),
-	party_id int REFERENCES parties(id),
 	term smallint NOT NULL,
-	session smallint NOT NULL,
-	-- create a committee table if needed
-	committee varchar(64) NOT NULL,
+	party_id int REFERENCES parties(id),
 	onboard_date date,
 	resign_date date,
 	resign_reason text,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+	PRIMARY KEY (politicians_id, term)
 );
 
 CREATE TABLE IF NOT EXISTS politician_questions (

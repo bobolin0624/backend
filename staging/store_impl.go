@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/taiwan-voting-guide/backend/model"
@@ -102,9 +103,6 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 		return err
 	}
 
-	fmt.Println(string(fieldsJSON))
-	fmt.Println(staging.Action)
-	fmt.Println(staging.Table)
 	if _, err := conn.Exec(ctx, `
 		INSERT INTO staging_data (table_name, action, fields)
 		VALUES ($1, $2, $3)
@@ -116,8 +114,7 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 	return nil
 }
 
-// TODO add diff
-func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.Staging, error) {
+func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit int) ([]*model.Staging, error) {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return nil, err
@@ -125,12 +122,13 @@ func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.Staging, e
 	defer conn.Close(ctx)
 
 	rows, err := conn.Query(ctx, `
-		SELECT id, table, fields, action, created_at, updated_at
+		SELECT id, table_name, fields, action, created_at, updated_at
 		FROM staging_data
 		ORDER BY id DESC
 		OFFSET $1 LIMIT $2
 	`, offset, limit)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -143,6 +141,48 @@ func (s *impl) List(ctx context.Context, offset, limit int) ([]*model.Staging, e
 
 		staging = append(staging, &s)
 	}
+
+	if len(staging) == 0 {
+		return []*model.Staging{}, nil
+	}
+
+	pks := table.Pks()
+	fields := table.Fields()
+
+	// Generate query for existing records for compare
+
+	conds := []string{}
+	args := []any{}
+	argsIdx := 1
+	for _, s := range staging {
+		if s.Action != model.StagingActionUpdate {
+			continue
+		}
+
+		ands := []string{}
+		for _, pk := range pks {
+			if _, ok := s.Fields[pk]; !ok {
+				log.Printf("pk not found: %s, fields: %v\n", pk, s.Fields)
+				return nil, ErrorStagingBadInput
+			}
+
+			ands = append(ands, fmt.Sprintf("%s = $%d", pk, argsIdx))
+			args = append(args, s.Fields[pk])
+			argsIdx++
+		}
+
+		conds = append(conds, fmt.Sprintf("(%s)", strings.Join(ands, " AND ")))
+	}
+
+	if len(conds) > 0 {
+		query := fmt.Sprintf("SELECT %s FROM %s WHERE ", strings.Join(fields, ", "), table)
+		query += strings.Join(conds, " OR ")
+		fmt.Println(query)
+
+		// select existing records
+	}
+
+	// combine olds and news records and return result
 
 	return staging, nil
 }

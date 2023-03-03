@@ -11,7 +11,7 @@ import (
 )
 
 func MountWorkspaceRoutes(rg *gin.RouterGroup) {
-	rg.GET("/staging", listStaging)
+	rg.GET("/staging/:table", listStaging)
 	rg.POST("/staging/:id", submitStaging)
 	rg.POST("/staging", createStaging)
 }
@@ -26,8 +26,14 @@ func listStaging(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 	}
 
+	table := model.StagingTable(c.Param("table"))
+	if !table.Valid() {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
 	stagingStore := staging.New()
-	staging, err := stagingStore.List(c, int(offset), int(limit))
+	staging, err := stagingStore.List(c, table, int(offset), int(limit))
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return

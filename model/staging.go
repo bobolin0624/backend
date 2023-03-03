@@ -32,7 +32,8 @@ func (r *StagingCreate) Query() ([]string, []any, string, []any) {
 		i += 1
 	}
 
-	pks, selects := r.Table.CreatePrimaryKeyVars()
+	pks := r.Table.Pks()
+	selects := r.Table.PkVars()
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE "+strings.Join(where, " AND "), strings.Join(pks, ", "), r.Table)
 	return pks, selects, query, args
 }
@@ -53,23 +54,150 @@ func (t StagingTable) Valid() bool {
 		t == StagingCreateTableLegislators
 }
 
-func (t StagingTable) CreatePrimaryKeyVars() ([]string, []any) {
+func (t StagingTable) Pks() []string {
 	switch t {
 	case StagingCreateTablePoliticians:
-		var id int
-		return []string{"id"}, []any{&id}
+		return []string{"id"}
+	case StagingCreateTableParties:
+		return []string{"id"}
+	case StagingCreateTableCandidates:
+		return []string{"type", "term", "politician_id"}
+	case StagingCreateTableLegislators:
+		return []string{"politician_id", "term"}
+	default:
+		panic("unknown table")
+	}
+}
+
+func (t StagingTable) PkVars() []any {
+	switch t {
 	case StagingCreateTableParties:
 		var id int
-		return []string{"id"}, []any{&id}
+		return []any{&id}
+	case StagingCreateTablePoliticians:
+		var id int
+		return []any{&id}
 	case StagingCreateTableCandidates:
 		var t string
 		var term, politicianId int
-		return []string{"type", "term", "politician_id"}, []any{&t, &term, &politicianId}
+		return []any{&t, &term, &politicianId}
 	case StagingCreateTableLegislators:
-		var id int
-		return []string{"id"}, []any{&id}
+		var politicianId, term int
+		return []any{&politicianId, &term}
+	default:
+		panic("unknown table")
 	}
-	return nil, nil
+}
+
+func (t StagingTable) Fields() []string {
+	switch t {
+	case StagingCreateTableParties:
+		return []string{
+			"id",
+			"name",
+			"chairman",
+			"established_date",
+			"filing_date",
+			"main_office_address",
+			"mailing_address",
+			"phone_number",
+			"status",
+		}
+	case StagingCreateTablePoliticians:
+		return []string{
+			"id",
+			"name",
+			"birthdate",
+			"avatar_url",
+			"sex",
+			"current_party_id",
+			"meta",
+		}
+	case StagingCreateTableCandidates:
+		return []string{
+			"type",
+			"term",
+			"politician_id",
+			"number",
+			"elected",
+			"party_id",
+			"area",
+			"vice_president",
+		}
+	case StagingCreateTableLegislators:
+		return []string{
+			"politicians_id",
+			"term",
+			"party_id",
+			"onboard_date",
+			"resign_date",
+			"resign_reason",
+		}
+	default:
+		panic("unknown table")
+	}
+}
+
+func (t StagingTable) FieldVars() []any {
+	switch t {
+	case StagingCreateTableParties:
+		var id int
+		var name, chairman, mainOfficeAddress, mailingAddress, phoneNumber, status string
+		var establishedDate, filingDate time.Time
+		return []any{
+			&id,
+			&name,
+			&chairman,
+			&establishedDate,
+			&filingDate,
+			&mainOfficeAddress,
+			&mailingAddress,
+			&phoneNumber,
+			&status,
+		}
+	case StagingCreateTablePoliticians:
+		var id int
+		var name, avatarUrl, sex, currentPartyId string
+		var birthdate time.Time
+		var meta []byte
+		return []any{
+			&id,
+			&name,
+			&birthdate,
+			&avatarUrl,
+			&sex,
+			&currentPartyId,
+			&meta,
+		}
+	case StagingCreateTableCandidates:
+		var t, area string
+		var term, politicianId, number, partyId int
+		var elected, vicePresident bool
+		return []any{
+			&t,
+			&term,
+			&politicianId,
+			&number,
+			&elected,
+			&partyId,
+			&area,
+			&vicePresident,
+		}
+	case StagingCreateTableLegislators:
+		var politicianId, term, partyId int
+		var onboardDate, resignDate time.Time
+		var resignReason string
+		return []any{
+			&politicianId,
+			&term,
+			&partyId,
+			&onboardDate,
+			&resignDate,
+			&resignReason,
+		}
+	default:
+		panic("unknown table")
+	}
 }
 
 type StagingCreateSearchBy map[string]any
@@ -122,4 +250,9 @@ type Staging struct {
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type StagingFieldCompare struct {
+	Old any `json:"old"`
+	New any `json:"new"`
 }

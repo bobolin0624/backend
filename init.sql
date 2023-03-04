@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS candidates (
 	vice_president boolean NOT NULL DEFAULT false,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 	PRIMARY KEY (type, term, politician_id)
 ); 
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS legislators (
 	resign_reason text,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 	PRIMARY KEY (politicians_id, term)
 );

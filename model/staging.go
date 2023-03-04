@@ -200,6 +200,22 @@ func (t StagingTable) FieldVars() []any {
 	}
 }
 
+func (t StagingTable) VarsToMap(args []any) map[string]any {
+	fields := t.Fields()
+	m := map[string]any{}
+	for i, f := range fields {
+		switch v := args[i].(type) {
+		case *string:
+		case *int:
+		case *bool:
+		case *time.Time:
+		case *[]byte:
+			m[f] = *v
+		}
+	}
+	return m
+}
+
 type StagingCreateSearchBy map[string]any
 
 func (s StagingCreateSearchBy) Valid() bool {

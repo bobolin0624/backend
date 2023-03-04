@@ -147,7 +147,8 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 	}
 
 	pks := table.Pks()
-	fields := table.Fields()
+	_ = table.Fields()
+	/// fields := table.Fields()
 
 	// Generate query for existing records for compare
 
@@ -174,15 +175,28 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 		conds = append(conds, fmt.Sprintf("(%s)", strings.Join(ands, " AND ")))
 	}
 
-	if len(conds) > 0 {
-		query := fmt.Sprintf("SELECT %s FROM %s WHERE ", strings.Join(fields, ", "), table)
-		query += strings.Join(conds, " OR ")
-		fmt.Println(query)
-
-		// select existing records
+	if len(conds) == 0 {
+		return staging, nil
 	}
 
-	// combine olds and news records and return result
+	// query := fmt.Sprintf("SELECT %s FROM %s WHERE ", strings.Join(fields, ", "), table)
+	// query += strings.Join(conds, " OR ")
+	// log.Println(query)
+
+	// // combine olds and news records and return result
+	// olds := map[string]map[string]any{}
+	// rows, err = conn.Query(ctx, query, args...)
+	// for rows.Next() {
+	// 	args := table.FieldVars()
+	// 	if err := rows.Scan(args...); err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	pkKey := ""
+	// 	for _, pk := range pks {
+	// 		pkKey +=
+
+	// }
 
 	return staging, nil
 }

@@ -21,14 +21,13 @@ const (
 	ResourceStaging Resource = "staging"
 )
 
-func GetPoliticianResource(id int) Resource {
+func PermissionPolitician(id int) Resource {
 	return Resource("politician:" + strconv.FormatInt(int64(id), 10))
 }
 
 type Action string
 
 const (
-	ActionAll    Action = "all"
 	ActionRead   Action = "read"
 	ActionWrite  Action = "write"
 	ActionDelete Action = "delete"

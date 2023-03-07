@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
 	"sort"
 	"strings"
@@ -13,28 +14,28 @@ type StagingCreate struct {
 	Fields   StagingCreateFields   `json:"fields"`
 }
 
-func (r *StagingCreate) Valid() bool {
-	return r.Table.Valid() && r.SearchBy.Valid() && r.Fields.Valid()
+func (sc *StagingCreate) Valid() bool {
+	return sc.Table.Valid() && sc.SearchBy.Valid() && sc.Fields.Valid()
 }
 
-func (r *StagingCreate) Query() ([]string, []any, string, []any) {
+func (sc *StagingCreate) Query() ([]string, []any, string, []any) {
 	where := []string{}
 	args := []any{}
 	i := 1
 	keys := []string{}
-	for k := range r.SearchBy {
+	for k := range sc.SearchBy {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
 		where = append(where, fmt.Sprintf("%s = $%d", k, i))
-		args = append(args, r.SearchBy[k])
+		args = append(args, sc.SearchBy[k])
 		i += 1
 	}
 
-	pks := r.Table.Pks()
-	selects := r.Table.PkVars()
-	query := fmt.Sprintf("SELECT %s FROM %s WHERE "+strings.Join(where, " AND "), strings.Join(pks, ", "), r.Table)
+	pks := sc.Table.Pks()
+	selects := sc.Table.PkVars()
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE "+strings.Join(where, " AND "), strings.Join(pks, ", "), sc.Table)
 	return pks, selects, query, args
 }
 
@@ -69,21 +70,108 @@ func (t StagingTable) Pks() []string {
 	}
 }
 
-func (t StagingTable) PkVars() []any {
+func (t StagingTable) PkIndex() []int {
+	switch t {
+	case StagingCreateTableParties:
+		return []int{0}
+	case StagingCreateTablePoliticians:
+		return []int{0}
+	case StagingCreateTableCandidates:
+		return []int{0, 1, 2}
+	case StagingCreateTableLegislators:
+		return []int{0, 1}
+	default:
+		panic("unknown table")
+	}
+}
+
+type FieldVars []any
+
+func (t StagingTable) PkMap(vars FieldVars) map[string]any {
+	pks := t.Pks()
+	m := map[string]any{}
+	for i, pk := range pks {
+		switch v := vars[i].(type) {
+		case *sql.NullInt64:
+			if !v.Valid {
+				continue
+			}
+			m[pk] = v.Int64
+		case *sql.NullBool:
+			if !v.Valid {
+				continue
+			}
+			m[pk] = v.Bool
+		case *sql.NullString:
+			if !v.Valid {
+				continue
+			}
+			m[pk] = v.String
+		case *sql.NullTime:
+			if !v.Valid {
+				continue
+			}
+			m[pk] = v.Time
+		}
+	}
+	return m
+
+}
+
+func (t StagingTable) PkKey(args FieldVars) string {
+	pkMap := t.PkMap(args)
+	keys := []string{}
+	for _, pk := range t.Pks() {
+		keys = append(keys, fmt.Sprintf("%v", pkMap[pk]))
+	}
+	return strings.Join(keys, "-")
+}
+
+func (t StagingTable) Map(vars FieldVars) map[string]any {
+	fields := t.Fields()
+	m := map[string]any{}
+	for i, f := range fields {
+		switch v := vars[i].(type) {
+		case *sql.NullInt64:
+			if !v.Valid {
+				continue
+			}
+			m[f] = v.Int64
+		case *sql.NullBool:
+			if !v.Valid {
+				continue
+			}
+			m[f] = v.Bool
+		case *sql.NullString:
+			if !v.Valid {
+				continue
+			}
+			m[f] = v.String
+		case *sql.NullTime:
+			if !v.Valid {
+				continue
+			}
+			m[f] = v.Time
+		}
+	}
+	return m
+}
+
+func (t StagingTable) PkVars() FieldVars {
 	switch t {
 	case StagingCreateTableParties:
 		var id int
-		return []any{&id}
+		return FieldVars{&id}
 	case StagingCreateTablePoliticians:
 		var id int
-		return []any{&id}
+		return FieldVars{&id}
 	case StagingCreateTableCandidates:
 		var t string
 		var term, politicianId int
-		return []any{&t, &term, &politicianId}
+		return FieldVars{&t, &term, &politicianId}
 	case StagingCreateTableLegislators:
 		var politicianId, term int
-		return []any{&politicianId, &term}
+		return FieldVars{&politicianId, &term}
 	default:
 		panic("unknown table")
 	}
@@ -138,13 +226,13 @@ func (t StagingTable) Fields() []string {
 	}
 }
 
-func (t StagingTable) FieldVars() []any {
+func (t StagingTable) FieldVars() FieldVars {
 	switch t {
 	case StagingCreateTableParties:
-		var id int
-		var name, chairman, mainOfficeAddress, mailingAddress, phoneNumber, status string
-		var establishedDate, filingDate time.Time
-		return []any{
+		var id sql.NullInt64
+		var name, chairman, mainOfficeAddress, mailingAddress, phoneNumber, status sql.NullString
+		var establishedDate, filingDate sql.NullTime
+		return FieldVars{
 			&id,
 			&name,
 			&chairman,
@@ -156,24 +244,22 @@ func (t StagingTable) FieldVars() []any {
 			&status,
 		}
 	case StagingCreateTablePoliticians:
-		var id int
-		var name, avatarUrl, sex, currentPartyId string
-		var birthdate time.Time
-		var meta []byte
-		return []any{
+		var id sql.NullInt64
+		var name, avatarUrl, sex, currentPartyId sql.NullString
+		var birthdate sql.NullTime
+		return FieldVars{
 			&id,
 			&name,
 			&birthdate,
 			&avatarUrl,
 			&sex,
 			&currentPartyId,
-			&meta,
 		}
 	case StagingCreateTableCandidates:
-		var t, area string
-		var term, politicianId, number, partyId int
-		var elected, vicePresident bool
-		return []any{
+		var t, area sql.NullString
+		var term, politicianId, number, partyId sql.NullInt64
+		var elected, vicePresident sql.NullBool
+		return FieldVars{
 			&t,
 			&term,
 			&politicianId,
@@ -184,10 +270,10 @@ func (t StagingTable) FieldVars() []any {
 			&vicePresident,
 		}
 	case StagingCreateTableLegislators:
-		var politicianId, term, partyId int
-		var onboardDate, resignDate time.Time
-		var resignReason string
-		return []any{
+		var politicianId, term, partyId sql.NullInt64
+		var onboardDate, resignDate sql.NullTime
+		var resignReason sql.NullString
+		return FieldVars{
 			&politicianId,
 			&term,
 			&partyId,
@@ -198,22 +284,6 @@ func (t StagingTable) FieldVars() []any {
 	default:
 		panic("unknown table")
 	}
-}
-
-func (t StagingTable) VarsToMap(args []any) map[string]any {
-	fields := t.Fields()
-	m := map[string]any{}
-	for i, f := range fields {
-		switch v := args[i].(type) {
-		case *string:
-		case *int:
-		case *bool:
-		case *time.Time:
-		case *[]byte:
-			m[f] = *v
-		}
-	}
-	return m
 }
 
 type StagingCreateSearchBy map[string]any
@@ -266,6 +336,14 @@ type Staging struct {
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (s *Staging) PkKey() string {
+	keys := []string{}
+	for _, pk := range s.Table.Pks() {
+		keys = append(keys, fmt.Sprintf("%v", s.Fields[pk]))
+	}
+	return strings.Join(keys, "-")
 }
 
 type StagingFieldCompare struct {

@@ -117,6 +117,7 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit int) ([]*model.Staging, error) {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	defer conn.Close(ctx)
@@ -147,11 +148,9 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 	}
 
 	pks := table.Pks()
-	_ = table.Fields()
-	/// fields := table.Fields()
+	fields := table.Fields()
 
 	// Generate query for existing records for compare
-
 	conds := []string{}
 	args := []any{}
 	argsIdx := 1
@@ -179,26 +178,69 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 		return staging, nil
 	}
 
-	// query := fmt.Sprintf("SELECT %s FROM %s WHERE ", strings.Join(fields, ", "), table)
-	// query += strings.Join(conds, " OR ")
-	// log.Println(query)
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE ", strings.Join(fields, ", "), table)
+	query += strings.Join(conds, " OR ")
 
-	// // combine olds and news records and return result
-	// olds := map[string]map[string]any{}
-	// rows, err = conn.Query(ctx, query, args...)
-	// for rows.Next() {
-	// 	args := table.FieldVars()
-	// 	if err := rows.Scan(args...); err != nil {
-	// 		return nil, err
-	// 	}
+	// combine olds and news records and return result
+	olds := map[string]map[string]any{}
+	rows, err = conn.Query(ctx, query, args...)
+	for rows.Next() {
+		// scan existing records
+		args := table.FieldVars()
+		if err := rows.Scan(args...); err != nil {
+			log.Println(err)
+			return nil, err
+		}
 
-	// 	pkKey := ""
-	// 	for _, pk := range pks {
-	// 		pkKey +=
+		// create map of fields
+		olds[table.PkKey(args)] = table.Map(args)
+	}
 
-	// }
+	// Combine olds and news records and return result
+	for _, s := range staging {
+		if s.Action != model.StagingActionUpdate {
+			continue
+		}
+
+		oldPkKey := s.PkKey()
+		m := map[string]any{}
+		for _, field := range fields {
+			newVal, newOk := s.Fields[field]
+			oldVal, oldOk := olds[oldPkKey][field]
+
+			if newOk && oldOk && !compareField(oldVal, newVal) {
+				m[field] = model.StagingFieldCompare{
+					Old: oldVal,
+					New: newVal,
+				}
+			}
+		}
+
+		s.Fields = m
+	}
+
+	fmt.Println(olds)
 
 	return staging, nil
+}
+
+func compareField(old, new any) bool {
+	// TODO
+	// 	switch o := old.(type) {
+	// 	case bool:
+	// 		return o == new.(bool)
+	// 	case float64:
+	// 		switch n := new.(type) {
+	// 		case int:
+	// 			return o == float64(n)
+	// 		case float64:
+	// 			return o == n
+	// 		}
+	// 	case string:
+	// 		return o == new.(string)
+	// 	}
+
+	return false
 }
 
 // TODO refactor

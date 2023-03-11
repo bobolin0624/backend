@@ -34,14 +34,14 @@ func listStaging(c *gin.Context) {
 	}
 
 	stagingStore := staging.New()
-	staging, err := stagingStore.List(c, table, int(offset), int(limit))
+	stagings, err := stagingStore.List(c, table, int(offset), int(limit))
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
 
 	c.JSON(200, gin.H{
-		"staging": staging,
+		"stagings": stagings,
 	})
 }
 

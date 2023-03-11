@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -64,6 +65,7 @@ func submitStaging(c *gin.Context) {
 func createStaging(c *gin.Context) {
 	var body model.StagingCreate
 	if err := c.BindJSON(&body); err != nil {
+		log.Printf("bad input: %v", err)
 		c.Status(http.StatusBadRequest)
 		return
 	}

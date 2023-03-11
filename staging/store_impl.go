@@ -2,11 +2,13 @@ package staging
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx"
 	"github.com/taiwan-voting-guide/backend/model"
@@ -43,16 +45,23 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 
 	// Insert primary keys to fields if the record exist.
 	if err == nil {
-		// Mark the record as update.
 		staging.Action = model.StagingActionUpdate
 		for i, pk := range pks {
 			switch selects[i].(type) {
-			case *string:
-				staging.Fields[pk] = *selects[i].(*string)
-			case *int:
-				staging.Fields[pk] = *selects[i].(*int)
+			case *sql.NullString:
+				ns := selects[i].(*sql.NullString)
+				staging.Fields[pk] = ns.String
+			case *sql.NullInt64:
+				nis := selects[i].(*sql.NullInt64)
+				staging.Fields[pk] = nis.Int64
+			case *sql.NullBool:
+				nb := selects[i].(*sql.NullBool)
+				staging.Fields[pk] = nb.Bool
+			case *sql.NullTime:
+				nd := selects[i].(*sql.NullTime)
+				staging.Fields[pk] = nd.Time
+
 			default:
-				log.Printf("pk: %s, value: %v", pk, selects[i])
 				return ErrorStagingBadInput
 			}
 		}
@@ -74,7 +83,7 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 			}
 
 			if !r.Valid() {
-				log.Printf("%v: %v\n", k, v)
+				log.Println(r)
 				return ErrorStagingBadInput
 			}
 
@@ -90,9 +99,10 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 				staging.Fields[k] = pk
 			}
 		case string:
-		case int:
+		case int64:
+		case bool:
+		case time.Time:
 		default:
-			log.Printf("%v: %v\n", k, v)
 			return ErrorStagingBadInput
 		}
 	}
@@ -122,6 +132,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 	}
 	defer conn.Close(ctx)
 
+	// Query from staging_data
 	rows, err := conn.Query(ctx, `
 		SELECT id, table_name, fields, action, created_at, updated_at
 		FROM staging_data
@@ -133,41 +144,36 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 		return nil, err
 	}
 
-	staging := []*model.Staging{}
+	stagings := []*model.Staging{}
 	for rows.Next() {
 		var s model.Staging
 		if err := rows.Scan(&s.Id, &s.Table, &s.Fields, &s.Action, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			return nil, err
 		}
 
-		staging = append(staging, &s)
+		stagings = append(stagings, &s)
 	}
-
-	if len(staging) == 0 {
+	if len(stagings) == 0 {
 		return []*model.Staging{}, nil
 	}
-
-	pks := table.Pks()
-	fields := table.Fields()
 
 	// Generate query for existing records for compare
 	conds := []string{}
 	args := []any{}
 	argsIdx := 1
-	for _, s := range staging {
+	for _, s := range stagings {
 		if s.Action != model.StagingActionUpdate {
 			continue
 		}
 
 		ands := []string{}
-		for _, pk := range pks {
-			if _, ok := s.Fields[pk]; !ok {
-				log.Printf("pk not found: %s, fields: %v\n", pk, s.Fields)
+		for _, pkName := range table.PkNames() {
+			if _, ok := s.Fields[pkName]; !ok {
 				return nil, ErrorStagingBadInput
 			}
 
-			ands = append(ands, fmt.Sprintf("%s = $%d", pk, argsIdx))
-			args = append(args, s.Fields[pk])
+			ands = append(ands, fmt.Sprintf("%s = $%d", pkName, argsIdx))
+			args = append(args, s.Fields[pkName])
 			argsIdx++
 		}
 
@@ -175,72 +181,80 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 	}
 
 	if len(conds) == 0 {
-		return staging, nil
+		return stagings, nil
 	}
 
-	query := fmt.Sprintf("SELECT %s FROM %s WHERE ", strings.Join(fields, ", "), table)
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE ", strings.Join(table.FieldNames(), ", "), table)
 	query += strings.Join(conds, " OR ")
 
-	// combine olds and news records and return result
 	olds := map[string]map[string]any{}
 	rows, err = conn.Query(ctx, query, args...)
 	for rows.Next() {
-		// scan existing records
-		args := table.FieldVars()
-		if err := rows.Scan(args...); err != nil {
+		fieldVars := table.FieldVars()
+		if err := rows.Scan(fieldVars.Vars...); err != nil {
 			log.Println(err)
 			return nil, err
 		}
 
-		// create map of fields
-		olds[table.PkKey(args)] = table.Map(args)
+		olds[fieldVars.KeyString()] = fieldVars.Map()
 	}
 
-	// Combine olds and news records and return result
-	for _, s := range staging {
+	// Combine old and new records and return result
+	for _, s := range stagings {
 		if s.Action != model.StagingActionUpdate {
 			continue
 		}
 
-		oldPkKey := s.PkKey()
+		key := s.KeyString()
 		m := map[string]any{}
-		for _, field := range fields {
-			newVal, newOk := s.Fields[field]
-			oldVal, oldOk := olds[oldPkKey][field]
+		for _, fieldName := range table.FieldNames() {
+			newVal, newOk := s.Fields[fieldName]
+			oldVal, oldOk := olds[key][fieldName]
 
-			if newOk && oldOk && !compareField(oldVal, newVal) {
-				m[field] = model.StagingFieldCompare{
-					Old: oldVal,
-					New: newVal,
-				}
+			compare := model.StagingFieldCompare{}
+			if newOk {
+				compare.New = newVal
 			}
+			if oldOk {
+				compare.Old = oldVal
+			}
+
+			if fieldChanged(oldVal, newVal) {
+				compare.Changed = true
+			}
+
+			m[fieldName] = compare
 		}
 
 		s.Fields = m
 	}
 
-	fmt.Println(olds)
-
-	return staging, nil
+	return stagings, nil
 }
 
-func compareField(old, new any) bool {
-	// TODO
-	// 	switch o := old.(type) {
-	// 	case bool:
-	// 		return o == new.(bool)
-	// 	case float64:
-	// 		switch n := new.(type) {
-	// 		case int:
-	// 			return o == float64(n)
-	// 		case float64:
-	// 			return o == n
-	// 		}
-	// 	case string:
-	// 		return o == new.(string)
-	// 	}
+func fieldChanged(old, new any) bool {
+	switch o := old.(type) {
+	case int64:
+		n, ok := new.(float64)
+		if !ok {
+			return true
+		}
+		return o != int64(n)
+	case string:
+		n, ok := new.(string)
+		if !ok {
+			return true
+		}
+		return o != n
+	case bool:
+		n, ok := new.(bool)
+		if !ok {
+			return true
+		}
+		return o != n
+	}
 
-	return false
+	return true
 }
 
 // TODO refactor

@@ -2,15 +2,15 @@
 
 CREATE TYPE sex AS ENUM ('male', 'female');
 CREATE TYPE policy_category AS ENUM (
-	'prevention',
-	'constitutional_reform',
-	'national_security',
-	'foreign_affairs',
-	'social_welfare',
-	'childcare_support',
-	'education_culture',
-	'environment_energy',
-	'judicial_system_legal_framework'
+	'防疫政策',
+	'憲法改革',
+	'國家安全',
+	'外交事務',
+	'社會福利',
+	'育兒支持',
+	'教育文化',
+	'環境能源',
+	'司法法制'
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -136,10 +136,11 @@ CREATE TABLE IF NOT EXISTS staging_data (
 );
 
 CREATE TABLE IF NOT EXISTS politician_policies (
-	id SERIAL PRIMARY KEY,
 	politician_id int NOT NULL REFERENCES politicians(id),
 	category policy_category NOT NULL,
-	content text NOT NULL
+	content text NOT NULL,
+
+	PRIMARY KEY (politician_id, category)
 );
 
 INSERT INTO politicians (name, birthdate, avatar_url, sex)

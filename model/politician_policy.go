@@ -7,7 +7,6 @@ type PoliticianPolicyCreate struct {
 }
 
 type PoliticianPolicy struct {
-	Id       int
 	PoliticianId int
 	Category string
 	Content string

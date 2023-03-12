@@ -43,7 +43,7 @@ func (im *impl) List(ctx context.Context, politicianId int) ([]*model.Politician
 	defer conn.Close(ctx)
 
 	rows, err := conn.Query(ctx, `
-		SELECT pp.id, pp.politician_id, pp.category, pp.content
+		SELECT pp.politician_id, pp.category, pp.content
 		FROM politician_policies pp
 		WHERE politician_id = $1
 	`, politicianId)
@@ -55,7 +55,7 @@ func (im *impl) List(ctx context.Context, politicianId int) ([]*model.Politician
 	policies := []*model.PoliticianPolicy{}
 	for rows.Next() {
 		q := model.PoliticianPolicy{}
-		if err := rows.Scan(&q.Id, &q.PoliticianId, &q.Category, &q.Content); err != nil {
+		if err := rows.Scan(&q.PoliticianId, &q.Category, &q.Content); err != nil {
 			return nil, err
 		}
 		policies = append(policies, &q)

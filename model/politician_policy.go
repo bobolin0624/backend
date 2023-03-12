@@ -2,8 +2,8 @@ package model
 
 type PoliticianPolicy struct {
 	PoliticianId int
-	Category 	 string
-	Content 	 string
+	Category     string
+	Content      string
 }
 
 type PoliticianPolicyRepr struct {

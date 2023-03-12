@@ -10,6 +10,7 @@
 git clone git@github.com:taiwan-voting-guide/backend.git
 cd backend
 ```
+
 4. Setup postgres
 
 ```sh
@@ -36,7 +37,6 @@ cp .env.example .env
 go run main.go
 ```
 
-
 7. Init politicians testing
 
 ```sh
@@ -47,4 +47,4 @@ go run main.go
 
 ## Troubleshoot
 
-1. *Wired db connection/schema error*: Try pulling the latest master and re-init pg.
+1. _Wired db connection/schema error_: Try pulling the latest master and re-init pg.

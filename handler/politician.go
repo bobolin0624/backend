@@ -11,8 +11,8 @@ import (
 	"github.com/taiwan-voting-guide/backend/handler/middleware"
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/politician"
-	"github.com/taiwan-voting-guide/backend/politician/question"
 	"github.com/taiwan-voting-guide/backend/politician/policy"
+	"github.com/taiwan-voting-guide/backend/politician/question"
 )
 
 func MountPolitician(rg *gin.RouterGroup) {
@@ -211,7 +211,7 @@ func createPolicies(c *gin.Context) {
 	policyCreate := &model.PoliticianPolicy{
 		PoliticianId: int(politicianId),
 		Category:     policyRepr.Category,
-		Content:     policyRepr.Content,
+		Content:      policyRepr.Content,
 	}
 
 	policyStore := policy.New()
@@ -240,7 +240,7 @@ func updatePolicies(c *gin.Context) {
 	policyCreate := &model.PoliticianPolicy{
 		PoliticianId: int(politicianId),
 		Category:     policyRepr.Category,
-		Content:     policyRepr.Content,
+		Content:      policyRepr.Content,
 	}
 
 	policyStore := policy.New()

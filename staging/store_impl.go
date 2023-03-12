@@ -136,9 +136,10 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 	rows, err := conn.Query(ctx, `
 		SELECT id, table_name, fields, action, created_at, updated_at
 		FROM staging_data
+		WHERE table_name = $1
 		ORDER BY id DESC
-		OFFSET $1 LIMIT $2
-	`, offset, limit)
+		OFFSET $2 LIMIT $3
+	`, table, offset, limit)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -257,8 +258,9 @@ func fieldChanged(old, new any) bool {
 	return true
 }
 
-// TODO refactor
+// TODO implement the actual submit
 func (s *impl) Submit(ctx context.Context, id int) error {
+	// TODO Add transation
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return err
@@ -271,8 +273,6 @@ func (s *impl) Submit(ctx context.Context, id int) error {
 	`, id); err != nil {
 		return err
 	}
-
-	// TODO implement the actual submit
 
 	return nil
 }

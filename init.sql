@@ -1,6 +1,17 @@
 -- TODO index all the tables
 
 CREATE TYPE sex AS ENUM ('male', 'female');
+CREATE TYPE policy_category AS ENUM (
+	'prevention',
+	'constitutional_reform',
+	'national_security',
+	'foreign_affairs',
+	'social_welfare',
+	'childcare_support',
+	'education_culture',
+	'environment_energy',
+	'judicial_system_legal_framework'
+);
 
 CREATE TABLE IF NOT EXISTS users (
 	id varchar(32) PRIMARY KEY,
@@ -65,7 +76,7 @@ CREATE TABLE IF NOT EXISTS candidates (
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 	PRIMARY KEY (type, term, politician_id)
-); 
+);
 
 CREATE TABLE IF NOT EXISTS legislators (
 	politicians_id int NOT NULL REFERENCES politicians(id),
@@ -122,6 +133,13 @@ CREATE TABLE IF NOT EXISTS staging_data (
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS politician_policies (
+	id SERIAL PRIMARY KEY,
+	politician_id int NOT NULL REFERENCES politicians(id),
+	category policy_category NOT NULL,
+	content text NOT NULL
 );
 
 INSERT INTO politicians (name, birthdate, avatar_url, sex)

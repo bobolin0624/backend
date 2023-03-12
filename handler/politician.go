@@ -12,6 +12,7 @@ import (
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/politician"
 	"github.com/taiwan-voting-guide/backend/politician/question"
+	"github.com/taiwan-voting-guide/backend/politician/policy"
 )
 
 func MountPolitician(rg *gin.RouterGroup) {
@@ -20,6 +21,9 @@ func MountPolitician(rg *gin.RouterGroup) {
 	rg.POST("/:politicianId/ask", middleware.MustAuth(), askQuestion)
 	rg.GET("/:politicianId/questions", listQuestions)
 	rg.GET("/:politicianId/candidates", listCandidates)
+	rg.GET("/:politicianId/policies", listPolicies)
+	rg.POST("/:politicianId/policies", createPolicies)
+	rg.PATCH("/:politicianId/policies", updatePolicies)
 }
 
 func createPolitician(c *gin.Context) {
@@ -165,4 +169,86 @@ func listCandidates(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"candidates": reprs,
 	})
+}
+
+func listPolicies(c *gin.Context) {
+	politicianId, err := strconv.ParseInt(c.Param("politicianId"), 10, 64)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	policies, err := policy.New().List(c, int(politicianId))
+	if err != nil {
+		log.Println(err)
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	reprs := []*model.PoliticianPolicyRepr{}
+	for _, q := range policies {
+		reprs = append(reprs, q.Repr())
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"policies": reprs,
+	})
+}
+
+func createPolicies(c *gin.Context) {
+	politicianId, err := strconv.ParseInt(c.Param("politicianId"), 10, 64)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	var policyRepr model.PoliticianPolicyRepr
+	if err := c.BindJSON(&policyRepr); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	policyCreate := &model.PoliticianPolicy{
+		PoliticianId: int(politicianId),
+		Category:     policyRepr.Category,
+		Content:     policyRepr.Content,
+	}
+
+	policyStore := policy.New()
+	err = policyStore.Create(c, policyCreate)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusCreated)
+}
+
+func updatePolicies(c *gin.Context) {
+	politicianId, err := strconv.ParseInt(c.Param("politicianId"), 10, 64)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	var policyRepr model.PoliticianPolicyRepr
+	if err := c.BindJSON(&policyRepr); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	policyCreate := &model.PoliticianPolicy{
+		PoliticianId: int(politicianId),
+		Category:     policyRepr.Category,
+		Content:     policyRepr.Content,
+	}
+
+	policyStore := policy.New()
+	err = policyStore.Update(c, policyCreate)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusCreated)
 }

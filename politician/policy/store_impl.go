@@ -2,7 +2,6 @@ package policy
 
 import (
 	"context"
-	"errors"
 
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/pg"
@@ -14,7 +13,7 @@ func New() Store {
 	return &impl{}
 }
 
-func (im *impl) Create(ctx context.Context, q *model.PoliticianPolicyCreate) error {
+func (im *impl) Create(ctx context.Context, q *model.PoliticianPolicy) error {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return err
@@ -31,8 +30,21 @@ func (im *impl) Create(ctx context.Context, q *model.PoliticianPolicyCreate) err
 	return nil
 }
 
-func (im *impl) Search(ctx context.Context, politicianId int, typ string) ([]*model.PoliticianPolicy, error) {
-	return nil, errors.New("not implemented")
+func (im *impl) Update(ctx context.Context, q *model.PoliticianPolicy) error {
+	conn, err := pg.Connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close(ctx)
+
+	if _, err := conn.Exec(ctx, `
+		UPDATE politician_policies SET content = $3
+		WHERE politician_id = $1 AND category = $2
+	`, q.PoliticianId, q.Category, q.Content); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (im *impl) List(ctx context.Context, politicianId int) ([]*model.PoliticianPolicy, error) {

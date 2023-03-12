@@ -7,7 +7,7 @@ import (
 )
 
 type Store interface {
-	Create(ctx context.Context, q *model.PoliticianPolicyCreate) error
+	Create(ctx context.Context, q *model.PoliticianPolicy) error
+	Update(ctx context.Context, q *model.PoliticianPolicy) error
 	List(ctx context.Context, politicianId int) ([]*model.PoliticianPolicy, error)
-	Search(ctx context.Context, politicianId int, typ string) ([]*model.PoliticianPolicy, error)
 }

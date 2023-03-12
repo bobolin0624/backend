@@ -1,20 +1,14 @@
 package model
 
-type PoliticianPolicyCreate struct {
-	PoliticianId int
-	Category     string
-	Content       string
-}
-
 type PoliticianPolicy struct {
 	PoliticianId int
-	Category string
-	Content string
+	Category 	 string
+	Content 	 string
 }
 
 type PoliticianPolicyRepr struct {
 	Category string `json:"category"`
-	Content string `json:"content"`
+	Content  string `json:"content"`
 }
 
 func (pp *PoliticianPolicy) Repr() *PoliticianPolicyRepr {

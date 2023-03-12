@@ -47,23 +47,7 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 	if err == nil {
 		staging.Action = model.StagingActionUpdate
 		for i, pk := range pks {
-			switch selects[i].(type) {
-			case *sql.NullString:
-				ns := selects[i].(*sql.NullString)
-				staging.Fields[pk] = ns.String
-			case *sql.NullInt64:
-				nis := selects[i].(*sql.NullInt64)
-				staging.Fields[pk] = nis.Int64
-			case *sql.NullBool:
-				nb := selects[i].(*sql.NullBool)
-				staging.Fields[pk] = nb.Bool
-			case *sql.NullTime:
-				nd := selects[i].(*sql.NullTime)
-				staging.Fields[pk] = nd.Time
-
-			default:
-				return ErrorStagingBadInput
-			}
+			staging.Fields[pk] = sqlVarToAny(selects[i])
 		}
 	}
 
@@ -76,7 +60,8 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 				log.Println(err)
 				return ErrorStagingBadInput
 			}
-			var r model.StagingCreate
+
+			var r model.StagingCreateNestedSearch
 			if err := json.Unmarshal(fieldJSON, &r); err != nil {
 				log.Println(err)
 				return ErrorStagingBadInput
@@ -95,8 +80,14 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 				return err
 			}
 
-			for _, pk := range pks {
-				staging.Fields[k] = pk
+			if len(pks) == 1 {
+				staging.Fields[k] = sqlVarToAny(selects[0])
+			} else {
+				m := make(map[string]any)
+				for i, pk := range pks {
+					m[pk] = sqlVarToAny(selects[i])
+				}
+				staging.Fields[k] = m
 			}
 		case string:
 		case int64:
@@ -124,6 +115,21 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 	return nil
 }
 
+func sqlVarToAny(v any) any {
+	switch v.(type) {
+	case *sql.NullString:
+		return v.(*sql.NullString).String
+	case *sql.NullInt64:
+		return v.(*sql.NullInt64).Int64
+	case *sql.NullBool:
+		return v.(*sql.NullBool).Bool
+	case *sql.NullTime:
+		return v.(*sql.NullTime).Time
+	default:
+		return nil
+	}
+}
+
 func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit int) ([]*model.Staging, error) {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
@@ -139,7 +145,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 		WHERE table_name = $1
 		ORDER BY id DESC
 		OFFSET $2 LIMIT $3
-	`, table, offset, limit)
+	`, offset, limit)
 	if err != nil {
 		log.Println(err)
 		return nil, err

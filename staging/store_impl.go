@@ -145,7 +145,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 		WHERE table_name = $1
 		ORDER BY id DESC
 		OFFSET $2 LIMIT $3
-	`, offset, limit)
+	`, table, offset, limit)
 	if err != nil {
 		log.Println(err)
 		return nil, err

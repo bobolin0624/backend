@@ -45,6 +45,58 @@ go run main.go
 
 1. (optional) [Download pgAdmin](https://www.pgadmin.org/download/)
 
+## Staging APIs
+
+### Create a staging record
+`table`: This refers to the target table to be processed.
+
+`searchBy`: These are the fields used to search the target table. If the data already exists in the target table, a create record is created. If not, an update record is created.
+
+`fields`: These are the individual fields used for the target table. If a field is a reference to another table, the reference's ID is searched for and replaced.
+
+```
+POST /workspace/staging
+
+{
+    "table": "parties",
+    "searchBy": {
+        "name": "民主進步黨" 
+    },
+    "fields": {
+        "name": "民主進步黨",
+        "chairman": "賴清德",
+        "established_date": "2012-12-12",
+        "filing_date date": "2012-12-12",
+        "main_office_address": "kkkkkkkk",
+        "mailing_address": "aaaaaaaaaa",
+        "phone_number": "091123321",
+        "status": "三小"
+    }
+}
+```
+```
+POST /workspace/staging
+
+{
+    "table": "politicians",
+    "searchBy": {
+        "name": "許淑華",
+        "birthdate": "1975-05-22"
+    },
+    "fields": {
+        "name": "許淑華",
+        "birthdate": "1975-05-22",
+        "sex": "female",
+        "current_party_id": {
+            "table": "parties",
+            "searchBy": {
+                "name": "中國國民黨"
+            }
+        }
+    }
+}
+```
+
 ## Troubleshoot
 
 1. _Wired db connection/schema error_: Try pulling the latest master and re-init pg.

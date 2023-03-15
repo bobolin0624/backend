@@ -60,6 +60,16 @@ func (t StagingTable) Valid() bool {
 	return ok
 }
 
+func (t StagingTable) isField(str string) bool {
+	for _, f := range t.Fields() {
+		if f.Name == str {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (t StagingTable) Fields() []Field {
 	fields, _ := tables[t]
 

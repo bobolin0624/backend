@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/jackc/pgx"
 	"github.com/taiwan-voting-guide/backend/model"
@@ -90,9 +89,8 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 				staging.Fields[k] = m
 			}
 		case string:
-		case int64:
+		case float64:
 		case bool:
-		case time.Time:
 		default:
 			return ErrorStagingBadInput
 		}

@@ -1,0 +1,41 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Cloud SDK
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          project_id: ${{ secrets.CLOUD_RUN_PROJECT_ID }}
+          service_account_email: ${{ secrets.CLOUD_RUN_SERVICE_ACCOUNT_EMAIL }}
+          service_account_key: ${{ secrets.CLOUD_RUN_SERVICE_KEY }}
+
+      - name: Print gcloud info
+        run: gcloud info
+
+      # - name: Build and push container image
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: backend
+      #     push: true
+      #     tags: gcr.io/${{ secrets.CLOUD_RUN_PROJECT_ID }}/backend:latest
+
+      # - name: Deploy to Cloud Run
+      #   uses: GoogleCloudPlatform/github-actions/cloud-run@master
+      #   with:
+      #     service_account_email: ${{ secrets.CLOUD_RUN_SERVICE_ACCOUNT_EMAIL }}
+      #     project_id: ${{ secrets.CLOUD_RUN_PROJECT_ID }}
+      #     region: ${{ secrets.CLOUD_RUN_REGION }}
+      #     service_name: backend
+      #     image_name: backend
+      #     tag: latest
+      #     platform: managed

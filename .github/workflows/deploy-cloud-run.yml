@@ -10,17 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: 'actions/checkout@v2'
 
-      - name: Set up Cloud SDK
-        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v1'
         with:
-          project_id: ${{ secrets.CLOUD_RUN_PROJECT_ID }}
-          service_account_email: ${{ secrets.CLOUD_RUN_SERVICE_ACCOUNT_EMAIL }}
-          service_account_key: ${{ secrets.CLOUD_RUN_SERVICE_KEY }}
+          service_account: ${{ secrets.CLOUD_RUN_SERVICE_ACCOUNT_EMAIL }}
+          credentials_json: ${{ secrets.CLOUD_RUN_SERVICE_KEY }}
 
-      - name: Print gcloud info
-        run: gcloud info
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+        with:
+          version: '>= 363.0.0'
+
+      - name: 'Use gcloud CLI'
+        run: 'gcloud info'
 
       # - name: Build and push container image
       #   uses: docker/build-push-action@v2

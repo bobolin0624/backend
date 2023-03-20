@@ -43,7 +43,7 @@ func (sc *StagingCreate) Valid() bool {
 	}
 	for k, v := range sc.Fields {
 		if !sc.Table.isField(k) {
-			log.Println("invalid fields key")
+			log.Printf("invalid fields key: %s", k)
 			return false
 		}
 

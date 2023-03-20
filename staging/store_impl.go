@@ -9,7 +9,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 	"github.com/taiwan-voting-guide/backend/model"
 	"github.com/taiwan-voting-guide/backend/pg"
 )
@@ -38,7 +38,8 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 
 	// Check if the record exist.
 	pks, selects, query, args := record.Query()
-	if err = conn.QueryRow(ctx, query, args...).Scan(selects...); err != nil && errors.Is(err, pgx.ErrNoRows) {
+	if err = conn.QueryRow(ctx, query, args...).Scan(selects...); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Println(err)
 		return err
 	}
 

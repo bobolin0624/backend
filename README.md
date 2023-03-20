@@ -66,7 +66,7 @@ POST /workspace/staging
         "name": "民主進步黨",
         "chairman": "賴清德",
         "established_date": "2012-12-12",
-        "filing_date date": "2012-12-12",
+        "filing_date": "2012-12-12",
         "main_office_address": "kkkkkkkk",
         "mailing_address": "aaaaaaaaaa",
         "phone_number": "091123321",

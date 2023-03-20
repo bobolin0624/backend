@@ -1,8 +1,8 @@
 package model
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"time"
@@ -14,16 +14,14 @@ type StagingCreate struct {
 	Fields   StagingCreateFields   `json:"fields"`
 }
 
-func (sc *StagingCreate) Valid() bool {
+func (sc *StagingCreate) Valid() (bool, error) {
 	if !sc.Table.Valid() {
-		log.Println("invalid table")
-		return false
+		return false, errors.New(fmt.Sprintf("invalid table name: %s", sc.Table))
 	}
 
 	for k, v := range sc.SearchBy {
 		if !sc.Table.isField(k) {
-			log.Println("invalid searchBy key")
-			return false
+			return false, errors.New(fmt.Sprintf("invalid searchBy key: %s", k))
 		}
 
 		switch v.(type) {
@@ -31,20 +29,19 @@ func (sc *StagingCreate) Valid() bool {
 		case bool:
 		case string:
 		default:
-			log.Println("invalid searchBy value")
-			return false
+			return false, errors.New(fmt.Sprintf("invalid searchBy value: %v", v))
 
 		}
 
 	}
 
 	if len(sc.Fields) == 0 {
-		return false
+		return false, errors.New("fields is empty")
 	}
+
 	for k, v := range sc.Fields {
 		if !sc.Table.isField(k) {
-			log.Printf("invalid fields key: %s", k)
-			return false
+			return false, errors.New(fmt.Sprintf("invalid fields key: %s", k))
 		}
 
 		switch v.(type) {
@@ -52,21 +49,19 @@ func (sc *StagingCreate) Valid() bool {
 			// check if it's nested search
 			nestedSearchBy, ok := mapToNestedSearchBy(v.(map[string]any))
 			if !ok {
-				return false
+				return false, errors.New(fmt.Sprintf("invalid nested searchBy: %v", v))
 			}
+
 			return nestedSearchBy.Valid()
 		case float64:
 		case bool:
 		case string:
 		default:
-			log.Println("invalid fields value")
-			return false
+			return false, errors.New(fmt.Sprintf("invalid fields value: %v", v))
 		}
 	}
 
-	fmt.Println("valid")
-
-	return true
+	return true, nil
 }
 
 func (sc *StagingCreate) Query() ([]string, []any, string, []any) {
@@ -87,14 +82,14 @@ func (ns *StagingCreateNestedSearch) Query() ([]string, []any, string, []any) {
 	return searchQuery(ns.Table, ns.SearchBy)
 }
 
-func (ns *StagingCreateNestedSearch) Valid() bool {
+func (ns *StagingCreateNestedSearch) Valid() (bool, error) {
 	if !ns.Table.Valid() {
-		return false
+		return false, errors.New(fmt.Sprintf("invalid nested search table name: %s", ns.Table))
 	}
 
 	for k, v := range ns.SearchBy {
 		if !ns.Table.isField(k) {
-			return false
+			return false, errors.New(fmt.Sprintf("invalid nested search searchBy key: %s", k))
 		}
 
 		switch v.(type) {
@@ -102,11 +97,11 @@ func (ns *StagingCreateNestedSearch) Valid() bool {
 		case bool:
 		case string:
 		default:
-			return false
+			return false, errors.New(fmt.Sprintf("invalid nested search searchBy value: %v", v))
 		}
 	}
 
-	return true
+	return true, nil
 }
 
 type Staging struct {

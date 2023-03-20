@@ -21,9 +21,10 @@ func New() Store {
 type impl struct{}
 
 func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
-	if !record.Valid() {
-		return ErrorStagingBadInput
+	if ok, err := record.Valid(); !ok {
+		return err
 	}
+
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return err
@@ -57,19 +58,16 @@ func (s *impl) Create(ctx context.Context, record *model.StagingCreate) error {
 		case map[string]any:
 			fieldJSON, err := json.Marshal(v)
 			if err != nil {
-				log.Println(err)
-				return ErrorStagingBadInput
+				return err
 			}
 
 			var r model.StagingCreateNestedSearch
 			if err := json.Unmarshal(fieldJSON, &r); err != nil {
-				log.Println(err)
-				return ErrorStagingBadInput
+				return err
 			}
 
-			if !r.Valid() {
-				log.Println(r)
-				return ErrorStagingBadInput
+			if ok, err := r.Valid(); !ok {
+				return err
 			}
 
 			pks, selects, query, args := r.Query()

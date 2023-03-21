@@ -212,13 +212,12 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 		case 0:
 			resultFields := []model.StagingResultField{}
 			for _, fn := range table.FieldNames() {
-				if v, ok := s.Fields[fn]; ok {
-					resultFields = append(resultFields, model.StagingResultField{
-						Type:  model.StagingResultFieldTypeValue,
-						Field: fn,
-						Value: v,
-					})
-				}
+				v := s.Fields[fn]
+				resultFields = append(resultFields, model.StagingResultField{
+					Type:  model.StagingResultFieldTypeValue,
+					Name:  fn,
+					Value: v,
+				})
 			}
 
 			results = append(results, model.StagingResult{
@@ -252,7 +251,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 
 				resultFields = append(resultFields, model.StagingResultField{
 					Type:  model.StagingResultFieldTypeCompare,
-					Field: fieldName,
+					Name:  fieldName,
 					Value: compare,
 				})
 			}
@@ -268,7 +267,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 				if v, ok := s.Fields[fn]; ok {
 					resultFields = append(resultFields, model.StagingResultField{
 						Type:  model.StagingResultFieldTypeValue,
-						Field: fn,
+						Name:  fn,
 						Value: v,
 					})
 				}

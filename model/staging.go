@@ -162,7 +162,7 @@ const (
 
 type StagingResultField struct {
 	Type  StagingResultFieldType `json:"type"`
-	Field string                 `json:"field"`
+	Name  string                 `json:"name"`
 	Value any                    `json:"value"`
 }
 

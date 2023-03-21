@@ -9,6 +9,7 @@ import (
 )
 
 type Staging struct {
+	Id       int           `json:"id"`
 	Table    StagingTable  `json:"table"`
 	SearchBy StagingFields `json:"searchBy"`
 	Fields   StagingFields `json:"fields"`
@@ -147,6 +148,7 @@ const (
 )
 
 type StagingResult struct {
+	Id     int                  `json:"id"`
 	Fields []StagingResultField `json:"fields"`
 	Status StagingResultStatus  `json:"status"`
 }

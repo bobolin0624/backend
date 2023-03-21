@@ -96,7 +96,8 @@ func (s *impl) Create(ctx context.Context, staging model.Staging) error {
 	if _, err := conn.Exec(ctx, `
 		INSERT INTO staging_data (table_name, search_by, fields)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (table_name, search_by, fields) DO NOTHING
+		ON CONFLICT (table_name, search_by, fields)
+		DO UPDATE SET updated_at = NOW()
 	`, staging.Table, searchByJSON, fieldsJSON); err != nil {
 		return err
 	}
@@ -129,7 +130,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 
 	// Query from staging_data
 	rows, err := conn.Query(ctx, `
-		SELECT table_name, search_by, fields, created_at 
+		SELECT id, table_name, search_by, fields, created_at 
 		FROM staging_data
 		WHERE table_name = $1
 		ORDER BY created_at DESC
@@ -142,7 +143,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 	stagings := []*model.Staging{}
 	for rows.Next() {
 		var s model.Staging
-		if err := rows.Scan(&s.Table, &s.SearchBy, &s.Fields, &s.CreatedAt); err != nil {
+		if err := rows.Scan(&s.Id, &s.Table, &s.SearchBy, &s.Fields, &s.CreatedAt); err != nil {
 			return nil, err
 		}
 
@@ -221,6 +222,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 			}
 
 			results = append(results, model.StagingResult{
+				Id:     s.Id,
 				Fields: resultFields,
 				Status: model.StagingResultStatusCreate,
 			})
@@ -256,6 +258,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 			}
 
 			results = append(results, model.StagingResult{
+				Id:     s.Id,
 				Fields: resultFields,
 				Status: model.StagingResultStatusUpdate,
 			})
@@ -271,6 +274,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 				}
 			}
 			results = append(results, model.StagingResult{
+				Id:     s.Id,
 				Fields: resultFields,
 				Status: model.StagingResultStatusConflict,
 			})

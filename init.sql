@@ -126,14 +126,16 @@ CREATE TABLE IF NOT EXISTS permissions (
 );
 
 CREATE TABLE IF NOT EXISTS staging_data (
-	id SERIAL PRIMARY KEY,
 	table_name varchar(32) NOT NULL,
+	search_by jsonb NOT NULL,
 	fields jsonb NOT NULL,
-	action varchar(32) NOT NULL,
 
 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+	PRIMARY KEY (table_name, search_by, fields)
 );
+
+CREATE INDEX stasging_data_update_at_idx ON staging_data (table_name, updated_at);
 
 CREATE TABLE IF NOT EXISTS politician_policies (
 	politician_id int NOT NULL REFERENCES politicians(id),

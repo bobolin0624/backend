@@ -12,9 +12,33 @@ import (
 )
 
 func MountWorkspaceRoutes(rg *gin.RouterGroup) {
+	rg.POST("/staging", createStaging)
 	rg.GET("/staging/:table", listStaging)
 	rg.POST("/staging/:id", submitStaging)
-	rg.POST("/staging", createStaging)
+}
+
+func createStaging(c *gin.Context) {
+	var body model.Staging
+	if err := c.BindJSON(&body); err != nil {
+		log.Printf("bad input: %v", err)
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	stagingStore := staging.New()
+	if err := stagingStore.Create(c, body); errors.Is(err, staging.ErrorStagingBadInput) {
+		c.Status(http.StatusBadRequest)
+		return
+	} else if errors.Is(err, staging.ErrorStagingFieldDepNotExist) {
+		c.Status(http.StatusFailedDependency)
+		return
+	} else if err != nil {
+		log.Println(err)
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusCreated)
 }
 
 func listStaging(c *gin.Context) {
@@ -36,6 +60,7 @@ func listStaging(c *gin.Context) {
 	stagingStore := staging.New()
 	stagings, err := stagingStore.List(c, table, int(offset), int(limit))
 	if err != nil {
+		log.Println(err)
 		c.Status(http.StatusInternalServerError)
 		return
 	}
@@ -60,27 +85,4 @@ func submitStaging(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
-}
-
-func createStaging(c *gin.Context) {
-	var body model.StagingCreate
-	if err := c.BindJSON(&body); err != nil {
-		log.Printf("bad input: %v", err)
-		c.Status(http.StatusBadRequest)
-		return
-	}
-
-	stagingStore := staging.New()
-	if err := stagingStore.Create(c, &body); errors.Is(err, staging.ErrorStagingBadInput) {
-		c.Status(http.StatusBadRequest)
-		return
-	} else if errors.Is(err, staging.ErrorStagingNoChange) {
-		c.Status(http.StatusNotModified)
-		return
-	} else if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-
-	c.Status(http.StatusCreated)
 }

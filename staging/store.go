@@ -8,13 +8,13 @@ import (
 )
 
 var (
-	ErrorStagingNoChange         = errors.New("staging data no change")
-	ErrorStagingBadInput         = errors.New("staging data bad input")
-	ErrorStagingFieldDepNotExist = errors.New("staging data field dependency not exists")
+	ErrorStagingBadInput              = errors.New("staging data bad input")
+	ErrorStagingFieldDepNotExist      = errors.New("staging data field dependency not exists")
+	ErrorStagingDuplicateSearchResult = errors.New("staging data duplicate search result")
 )
 
 type Store interface {
-	Create(ctx context.Context, record *model.StagingCreate) error
+	Create(ctx context.Context, staging model.Staging) error
 	Submit(ctx context.Context, id int) error
-	List(ctx context.Context, table model.StagingTable, offset, limit int) ([]*model.Staging, error)
+	List(ctx context.Context, table model.StagingTable, offset, limit int) ([]model.StagingResult, error)
 }

@@ -187,8 +187,8 @@ type FieldVars struct {
 	Vars  []any
 }
 
-func (fv FieldVars) Map() map[string]any {
-	m := map[string]any{}
+func (fv FieldVars) Map() StagingFields {
+	m := StagingFields{}
 	for i, n := range fv.Names {
 		switch v := fv.Vars[i].(type) {
 		case *sql.NullInt64:

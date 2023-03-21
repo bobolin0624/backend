@@ -8,19 +8,21 @@ import (
 	"time"
 )
 
-type StagingCreate struct {
-	Table    StagingTable          `json:"table"`
-	SearchBy StagingCreateSearchBy `json:"searchBy"`
-	Fields   StagingCreateFields   `json:"fields"`
+type Staging struct {
+	Table    StagingTable  `json:"table"`
+	SearchBy StagingFields `json:"searchBy"`
+	Fields   StagingFields `json:"fields"`
+
+	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (sc *StagingCreate) Valid() (bool, error) {
-	if !sc.Table.Valid() {
-		return false, errors.New(fmt.Sprintf("invalid table name: %s", sc.Table))
+func (s Staging) Valid() (bool, error) {
+	if !s.Table.Valid() {
+		return false, errors.New(fmt.Sprintf("invalid table name: %s", s.Table))
 	}
 
-	for k, v := range sc.SearchBy {
-		if !sc.Table.isField(k) {
+	for k, v := range s.SearchBy {
+		if !s.Table.isField(k) {
 			return false, errors.New(fmt.Sprintf("invalid searchBy key: %s", k))
 		}
 
@@ -30,17 +32,15 @@ func (sc *StagingCreate) Valid() (bool, error) {
 		case string:
 		default:
 			return false, errors.New(fmt.Sprintf("invalid searchBy value: %v", v))
-
 		}
-
 	}
 
-	if len(sc.Fields) == 0 {
+	if len(s.Fields) == 0 {
 		return false, errors.New("fields is empty")
 	}
 
-	for k, v := range sc.Fields {
-		if !sc.Table.isField(k) {
+	for k, v := range s.Fields {
+		if !s.Table.isField(k) {
 			return false, errors.New(fmt.Sprintf("invalid fields key: %s", k))
 		}
 
@@ -64,25 +64,59 @@ func (sc *StagingCreate) Valid() (bool, error) {
 	return true, nil
 }
 
-func (sc *StagingCreate) Query() ([]string, []any, string, []any) {
-	return searchQuery(sc.Table, sc.SearchBy)
+func (s Staging) Query() ([]string, []any, string, []any) {
+	return searchQuery(s.Table, s.SearchBy)
 }
 
-// TODO revisit this
-type StagingCreateSearchBy map[string]any
+func (s Staging) KeyString() string {
+	strs := []string{}
+	for _, pk := range s.Table.PkNames() {
+		v, ok := s.Fields[pk]
+		if !ok {
+			panic("Staging.KeyString: missing pk")
+		}
+		strs = append(strs, fmt.Sprintf("%v", v))
+	}
 
-type StagingCreateFields map[string]any
+	return strings.Join(strs, "-")
+}
 
-type StagingCreateNestedSearch struct {
+type StagingFields map[string]any
+
+func (sf StagingFields) Equal(fields StagingFields) bool {
+	if len(sf) != len(fields) {
+		return false
+	}
+
+	for k, v := range sf {
+		if fields[k] != v {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (sf StagingFields) ExistIn(fields StagingFields) bool {
+	for k, v := range sf {
+		if fields[k] != v {
+			return false
+		}
+	}
+
+	return true
+}
+
+type StagingNestedSearch struct {
 	Table    StagingTable
-	SearchBy StagingCreateSearchBy
+	SearchBy StagingFields
 }
 
-func (ns *StagingCreateNestedSearch) Query() ([]string, []any, string, []any) {
+func (ns *StagingNestedSearch) Query() ([]string, []any, string, []any) {
 	return searchQuery(ns.Table, ns.SearchBy)
 }
 
-func (ns *StagingCreateNestedSearch) Valid() (bool, error) {
+func (ns *StagingNestedSearch) Valid() (bool, error) {
 	if !ns.Table.Valid() {
 		return false, errors.New(fmt.Sprintf("invalid nested search table name: %s", ns.Table))
 	}
@@ -104,35 +138,31 @@ func (ns *StagingCreateNestedSearch) Valid() (bool, error) {
 	return true, nil
 }
 
-type Staging struct {
-	Id     int            `json:"id"`
-	Table  StagingTable   `json:"table"`
-	Action StagingAction  `json:"action"`
-	Fields map[string]any `json:"fields"`
-
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-func (s Staging) KeyString() string {
-	strs := []string{}
-	for _, pk := range s.Table.PkNames() {
-		v, ok := s.Fields[pk]
-		if !ok {
-			panic("Staging.KeyString: missing pk")
-		}
-		strs = append(strs, fmt.Sprintf("%v", v))
-	}
-
-	return strings.Join(strs, "-")
-}
+type StagingResultStatus string
 
 const (
-	StagingActionCreate StagingAction = "create"
-	StagingActionUpdate StagingAction = "update"
+	StagingResultStatusCreate   StagingResultStatus = "create"
+	StagingResultStatusUpdate   StagingResultStatus = "update"
+	StagingResultStatusConflict StagingResultStatus = "conflict"
 )
 
-type StagingAction string
+type StagingResult struct {
+	Fields []StagingResultField `json:"fields"`
+	Status StagingResultStatus  `json:"status"`
+}
+
+type StagingResultFieldType string
+
+const (
+	StagingResultFieldTypeCompare StagingResultFieldType = "compare"
+	StagingResultFieldTypeValue   StagingResultFieldType = "value"
+)
+
+type StagingResultField struct {
+	Type  StagingResultFieldType `json:"type"`
+	Field string                 `json:"field"`
+	Value any                    `json:"value"`
+}
 
 type StagingFieldCompare struct {
 	Changed bool `json:"changed"`
@@ -140,7 +170,7 @@ type StagingFieldCompare struct {
 	New     any  `json:"new"`
 }
 
-func searchQuery(table StagingTable, searchBy StagingCreateSearchBy) ([]string, []any, string, []any) {
+func searchQuery(table StagingTable, searchBy StagingFields) ([]string, []any, string, []any) {
 	where := []string{}
 	args := []any{}
 	i := 1
@@ -161,23 +191,23 @@ func searchQuery(table StagingTable, searchBy StagingCreateSearchBy) ([]string, 
 	return pks, fieldVars.Vars, query, args
 }
 
-func mapToNestedSearchBy(m map[string]any) (StagingCreateNestedSearch, bool) {
+func mapToNestedSearchBy(m map[string]any) (*StagingNestedSearch, bool) {
 	table, ok := m["table"]
 	if !ok {
-		return StagingCreateNestedSearch{}, false
+		return nil, false
 	}
 
 	searchByMap, ok := m["searchBy"]
 	if !ok {
-		return StagingCreateNestedSearch{}, false
+		return nil, false
 	}
 
 	searchBy, ok := searchByMap.(map[string]any)
 	if !ok {
-		return StagingCreateNestedSearch{}, false
+		return nil, false
 	}
 
-	return StagingCreateNestedSearch{
+	return &StagingNestedSearch{
 		Table:    StagingTable(table.(string)),
 		SearchBy: searchBy,
 	}, true

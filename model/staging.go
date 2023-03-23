@@ -47,7 +47,6 @@ func (s Staging) Valid() (bool, error) {
 
 		switch v.(type) {
 		case map[string]any:
-			// check if it's nested search
 			nestedSearchBy, ok := mapToNestedSearchBy(v.(map[string]any))
 			if !ok {
 				return false, errors.New(fmt.Sprintf("invalid nested searchBy: %v", v))
@@ -63,23 +62,6 @@ func (s Staging) Valid() (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (s Staging) Query() ([]string, []any, string, []any) {
-	return searchQuery(s.Table, s.SearchBy)
-}
-
-func (s Staging) KeyString() string {
-	strs := []string{}
-	for _, pk := range s.Table.PkNames() {
-		v, ok := s.Fields[pk]
-		if !ok {
-			panic("Staging.KeyString: missing pk")
-		}
-		strs = append(strs, fmt.Sprintf("%v", v))
-	}
-
-	return strings.Join(strs, "-")
 }
 
 type StagingFields map[string]any
@@ -188,7 +170,7 @@ func searchQuery(table StagingTable, searchBy StagingFields) ([]string, []any, s
 	}
 
 	pks := table.PkNames()
-	fieldVars := table.PkVars()
+	fieldVars := table.pkVars()
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE "+strings.Join(where, " AND "), strings.Join(pks, ", "), table)
 	return pks, fieldVars.Vars, query, args
 }

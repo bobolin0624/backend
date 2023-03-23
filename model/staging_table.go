@@ -2,8 +2,6 @@ package model
 
 import (
 	"database/sql"
-	"strconv"
-	"strings"
 )
 
 var tables = map[StagingTable][]Field{
@@ -61,7 +59,7 @@ func (t StagingTable) Valid() bool {
 }
 
 func (t StagingTable) isField(str string) bool {
-	for _, f := range t.Fields() {
+	for _, f := range t.fields() {
 		if f.Name == str {
 			return true
 		}
@@ -70,7 +68,7 @@ func (t StagingTable) isField(str string) bool {
 	return false
 }
 
-func (t StagingTable) Fields() []Field {
+func (t StagingTable) fields() []Field {
 	fields, _ := tables[t]
 
 	fs := []Field{}
@@ -81,7 +79,7 @@ func (t StagingTable) Fields() []Field {
 }
 
 func (t StagingTable) FieldNames() []string {
-	fields := t.Fields()
+	fields := t.fields()
 	names := []string{}
 	for _, f := range fields {
 		names = append(names, f.Name)
@@ -101,7 +99,7 @@ func (t StagingTable) FieldVars() FieldVars {
 	return FieldVars{Table: t, Names: names, Vars: vars}
 }
 
-func (t StagingTable) Pks() []Field {
+func (t StagingTable) pks() []Field {
 	fields, _ := tables[t]
 
 	pks := []Field{}
@@ -114,7 +112,7 @@ func (t StagingTable) Pks() []Field {
 }
 
 func (t StagingTable) PkNames() []string {
-	fields := t.Pks()
+	fields := t.pks()
 	names := []string{}
 	for _, f := range fields {
 		names = append(names, f.Name)
@@ -122,20 +120,7 @@ func (t StagingTable) PkNames() []string {
 	return names
 }
 
-func (t StagingTable) PkIndex() []int {
-	fields, _ := tables[t]
-
-	indexs := []int{}
-	for i, f := range fields {
-		if !f.Pk {
-			continue
-		}
-		indexs = append(indexs, i)
-	}
-	return indexs
-}
-
-func (t StagingTable) PkVars() FieldVars {
+func (t StagingTable) pkVars() FieldVars {
 	fields, _ := tables[t]
 
 	vars := []any{}
@@ -214,34 +199,4 @@ func (fv FieldVars) Map() StagingFields {
 		}
 	}
 	return m
-}
-
-func (fv FieldVars) KeyString() string {
-	strs := []string{}
-	for i := range fv.Table.PkIndex() {
-		switch v := fv.Vars[i].(type) {
-		case *sql.NullInt64:
-			if !v.Valid {
-				continue
-			}
-			strs = append(strs, strconv.FormatInt(v.Int64, 10))
-		case *sql.NullBool:
-			if !v.Valid {
-				continue
-			}
-			strs = append(strs, strconv.FormatBool(v.Bool))
-		case *sql.NullString:
-			if !v.Valid {
-				continue
-			}
-			strs = append(strs, v.String)
-		case *sql.NullTime:
-			if !v.Valid {
-				continue
-			}
-			strs = append(strs, v.Time.Format("2006-01-02"))
-		default:
-		}
-	}
-	return strings.Join(strs, "-")
 }

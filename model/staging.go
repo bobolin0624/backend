@@ -154,6 +154,12 @@ type StagingFieldCompare struct {
 	New     any  `json:"new"`
 }
 
+type StagingSubmit struct {
+	Id     int           `json:"-"`
+	Table  StagingTable  `json:"table"`
+	Fields StagingFields `json:"fields"`
+}
+
 func searchQuery(table StagingTable, searchBy StagingFields) ([]string, []any, string, []any) {
 	where := []string{}
 	args := []any{}

@@ -15,6 +15,6 @@ var (
 
 type Store interface {
 	Create(ctx context.Context, staging model.Staging) error
-	Submit(ctx context.Context, id int) error
+	Submit(ctx context.Context, submit model.StagingSubmit) error
 	List(ctx context.Context, table model.StagingTable, offset, limit int) ([]model.StagingResult, error)
 }

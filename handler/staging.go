@@ -72,14 +72,22 @@ func listStaging(c *gin.Context) {
 
 func submitStaging(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
+	var body model.StagingSubmit
+	if err := c.BindJSON(&body); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	body.Id = id
+
 	stagingStore := staging.New()
-	if err := stagingStore.Submit(c, int(id)); err != nil {
+	if err := stagingStore.Submit(c, body); err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}

@@ -321,21 +321,30 @@ func fieldChanged(old, new any) bool {
 	return true
 }
 
-// TODO implement the actual submit
-func (s *impl) Submit(ctx context.Context, id int) error {
-	// TODO Add transation
+func (s *impl) Submit(ctx context.Context, submit model.StagingSubmit) error {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Close(ctx)
 
-	if _, err = conn.Exec(ctx, `
-		DELETE FROM staging_data
-		WHERE id = $1
-	`, id); err != nil {
+	tx, err := conn.Begin(ctx)
+	if err != nil {
 		return err
 	}
+
+	tx.Exec(ctx, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+
+	tx.Exec(ctx, fmt.Sprintf("LOCK TABLE %s IN EXCLUSIVE MODE", submit.Table))
+
+	if _, err = tx.Exec(ctx, `
+		DELETE FROM staging_data
+		WHERE id = $1
+	`, submit.Id); err != nil {
+		return err
+	}
+
+	tx.Commit(ctx)
 
 	return nil
 }

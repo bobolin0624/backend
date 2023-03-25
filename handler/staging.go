@@ -12,15 +12,15 @@ import (
 )
 
 func MountWorkspaceRoutes(rg *gin.RouterGroup) {
-	rg.POST("/staging", createStaging)
+	rg.POST("/staging/create", createStaging)
 	rg.GET("/staging/:table", listStaging)
 	rg.POST("/staging/:id", submitStaging)
+	rg.DELETE("/staging/:id", deleteStaging)
 }
 
 func createStaging(c *gin.Context) {
 	var body model.Staging
 	if err := c.BindJSON(&body); err != nil {
-		log.Printf("bad input: %v", err)
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -46,7 +46,7 @@ func listStaging(c *gin.Context) {
 	if err != nil {
 		c.Status(http.StatusBadRequest)
 	}
-	limit, err := strconv.ParseInt(c.DefaultQuery("limit", "10"), 10, 64)
+	limit, err := strconv.ParseInt(c.DefaultQuery("limit", "5"), 10, 64)
 	if err != nil || limit > 100 {
 		c.Status(http.StatusBadRequest)
 	}
@@ -78,16 +78,38 @@ func submitStaging(c *gin.Context) {
 		return
 	}
 
-	var body model.StagingSubmit
-	if err := c.BindJSON(&body); err != nil {
+	var fields model.StagingFields
+	if err := c.BindJSON(&fields); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
-	body.Id = id
+	if !fields.Valid() {
+		c.Status(http.StatusBadRequest)
+		return
+	}
 
 	stagingStore := staging.New()
-	if err := stagingStore.Submit(c, body); err != nil {
+	if err := stagingStore.Submit(c, id, fields); err != nil {
+		log.Println(err)
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func deleteStaging(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	stagingStore := staging.New()
+	if err := stagingStore.Delete(c, id); err != nil {
+		log.Println(err)
 		c.Status(http.StatusInternalServerError)
 		return
 	}

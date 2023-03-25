@@ -42,7 +42,6 @@ func (s *impl) Create(ctx context.Context, staging model.Staging) error {
 	for k, v := range staging.Fields {
 		switch v.(type) {
 		case map[string]any:
-			log.Println("nested search")
 			fieldJSON, err := json.Marshal(v)
 			if err != nil {
 				return err
@@ -85,8 +84,6 @@ func (s *impl) Create(ctx context.Context, staging model.Staging) error {
 			return ErrorStagingBadInput
 		}
 	}
-
-	fmt.Println(fields)
 
 	fieldsJSON, err := json.Marshal(fields)
 	if err != nil {
@@ -188,6 +185,9 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 
 	oldFieldsList := []model.StagingFields{}
 	rows, err = conn.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
 	for rows.Next() {
 		fieldVars := table.FieldVars()
 		if err := rows.Scan(fieldVars.Vars...); err != nil {
@@ -232,6 +232,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 				s.Fields[pk] = oldFields[pk]
 			}
 
+			changed := false
 			resultFields := []model.StagingResultField{}
 			for _, fieldName := range table.FieldNames() {
 				newVal, newOk := s.Fields[fieldName]
@@ -247,6 +248,7 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 
 				if fieldChanged(oldVal, newVal) {
 					compare.Changed = true
+					changed = true
 				}
 
 				resultFields = append(resultFields, model.StagingResultField{
@@ -256,10 +258,15 @@ func (s *impl) List(ctx context.Context, table model.StagingTable, offset, limit
 				})
 			}
 
+			status := model.StagingResultStatusUpdate
+			if !changed {
+				status = model.StagingResultStatusDuplicate
+			}
+
 			results = append(results, model.StagingResult{
 				Id:     s.Id,
 				Fields: resultFields,
-				Status: model.StagingResultStatusUpdate,
+				Status: status,
 			})
 		default:
 			resultFields := []model.StagingResultField{}
@@ -321,7 +328,7 @@ func fieldChanged(old, new any) bool {
 	return true
 }
 
-func (s *impl) Submit(ctx context.Context, submit model.StagingSubmit) error {
+func (s *impl) Submit(ctx context.Context, id int, fields model.StagingFields) error {
 	conn, err := pg.Connect(ctx)
 	if err != nil {
 		return err
@@ -333,18 +340,126 @@ func (s *impl) Submit(ctx context.Context, submit model.StagingSubmit) error {
 		return err
 	}
 
-	tx.Exec(ctx, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+	var table model.StagingTable
+	searchBy := model.StagingFields{}
+	err = tx.QueryRow(ctx, `
+		SELECT table_name, search_by 
+		FROM staging_data
+		WHERE id = $1
+		FOR UPDATE
+	`, id).Scan(&table, &searchBy)
+	if err != nil {
+		tx.Rollback(ctx)
+		return err
+	}
 
-	tx.Exec(ctx, fmt.Sprintf("LOCK TABLE %s IN EXCLUSIVE MODE", submit.Table))
+	ands := []string{}
+	args := []any{}
+	argsIdx := 1
+	for field, value := range searchBy {
+		ands = append(ands, fmt.Sprintf("%s = $%d", field, argsIdx))
+		args = append(args, value)
+		argsIdx++
+	}
+
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE ", strings.Join(table.FieldNames(), ", "), table)
+	query += strings.Join(ands, " AND ")
+	query += " FOR UPDATE"
+
+	rows, err := tx.Query(ctx, query, args...)
+	if err != nil {
+		tx.Rollback(ctx)
+		return err
+	}
+
+	oldFieldsList := []model.StagingFields{}
+	for rows.Next() {
+		fieldVars := table.FieldVars()
+		if err := rows.Scan(fieldVars.Vars...); err != nil {
+			log.Println(err)
+			return err
+		}
+
+		oldFieldsList = append(oldFieldsList, fieldVars.Map())
+	}
+
+	insertFields := []string{}
+	insertValues := []string{}
+	valueIdx := 1
+	insertVars := []any{}
+	for _, field := range table.FieldNames() {
+		if _, ok := fields[field]; !ok {
+			continue
+		}
+
+		insertFields = append(insertFields, field)
+		insertValues = append(insertValues, fmt.Sprintf("$%d", valueIdx))
+		insertVars = append(insertVars, fields[field])
+		valueIdx++
+	}
+
+	switch len(oldFieldsList) {
+	case 0:
+		inserts := strings.Join(insertFields, ", ")
+		values := strings.Join(insertValues, ", ")
+
+		query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, inserts, values)
+		tag, err := tx.Exec(ctx, query, insertVars...)
+		if err != nil {
+			tx.Rollback(ctx)
+			return err
+		}
+		if rowsAffected := tag.RowsAffected(); rowsAffected != 1 {
+			tx.Rollback(ctx)
+			return ErrorStagingInsertFailed
+		}
+	case 1:
+		oldFields := oldFieldsList[0]
+		sets := []string{}
+		for i, field := range insertFields {
+			sets = append(sets, fmt.Sprintf("%s = $%d", field, i+1))
+		}
+
+		where := []string{}
+		for _, field := range table.PkNames() {
+			where = append(where, fmt.Sprintf("%s = $%d", field, valueIdx))
+			insertVars = append(insertVars, oldFields[field])
+			valueIdx++
+		}
+
+		query := fmt.Sprintf("UPDATE %s SET %s WHERE ", table, strings.Join(sets, ", "))
+		query += strings.Join(where, " AND ")
+		log.Println(query)
+
+	default:
+		tx.Rollback(ctx)
+		return ErrorStagingDuplicateSearchResult
+	}
 
 	if _, err = tx.Exec(ctx, `
 		DELETE FROM staging_data
 		WHERE id = $1
-	`, submit.Id); err != nil {
+	`, id); err != nil {
+		tx.Rollback(ctx)
 		return err
 	}
 
 	tx.Commit(ctx)
 
 	return nil
+}
+
+func (s *impl) Delete(ctx context.Context, id int) error {
+	conn, err := pg.Connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close(ctx)
+
+	_, err = conn.Exec(ctx, `
+		DELETE FROM staging_data
+		WHERE id = $1
+	`, id)
+
+	return err
 }

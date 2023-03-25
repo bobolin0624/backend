@@ -82,7 +82,55 @@ func (sf StagingFields) Equal(fields StagingFields) bool {
 
 func (sf StagingFields) ExistIn(fields StagingFields) bool {
 	for k, v := range sf {
-		if fields[k] != v {
+		switch v.(type) {
+		case float64:
+			switch fields[k].(type) {
+			case float64:
+				if v.(float64) != fields[k].(float64) {
+					return false
+				}
+			case int64:
+				if int64(v.(float64)) != fields[k].(int64) {
+					return false
+				}
+			default:
+				return false
+			}
+		case int64:
+			switch fields[k].(type) {
+			case float64:
+				if v.(int64) != int64(fields[k].(float64)) {
+					return false
+				}
+			case int64:
+				if v.(int64) != fields[k].(int64) {
+					return false
+				}
+			default:
+				return false
+			}
+		default:
+			if v != fields[k] {
+				return false
+			}
+		}
+
+	}
+
+	return true
+}
+
+func (sf StagingFields) Valid() bool {
+	if len(sf) == 0 {
+		return false
+	}
+
+	for _, v := range sf {
+		switch v.(type) {
+		case float64:
+		case bool:
+		case string:
+		default:
 			return false
 		}
 	}
@@ -124,9 +172,10 @@ func (ns *StagingNestedSearch) Valid() (bool, error) {
 type StagingResultStatus string
 
 const (
-	StagingResultStatusCreate   StagingResultStatus = "create"
-	StagingResultStatusUpdate   StagingResultStatus = "update"
-	StagingResultStatusConflict StagingResultStatus = "conflict"
+	StagingResultStatusCreate    StagingResultStatus = "create"
+	StagingResultStatusUpdate    StagingResultStatus = "update"
+	StagingResultStatusDuplicate StagingResultStatus = "duplicate"
+	StagingResultStatusConflict  StagingResultStatus = "conflict"
 )
 
 type StagingResult struct {
@@ -152,12 +201,6 @@ type StagingFieldCompare struct {
 	Changed bool `json:"changed"`
 	Old     any  `json:"old"`
 	New     any  `json:"new"`
-}
-
-type StagingSubmit struct {
-	Id     int           `json:"-"`
-	Table  StagingTable  `json:"table"`
-	Fields StagingFields `json:"fields"`
 }
 
 func searchQuery(table StagingTable, searchBy StagingFields) ([]string, []any, string, []any) {

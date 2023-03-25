@@ -46,7 +46,7 @@ func listStaging(c *gin.Context) {
 	if err != nil {
 		c.Status(http.StatusBadRequest)
 	}
-	limit, err := strconv.ParseInt(c.DefaultQuery("limit", "5"), 10, 64)
+	limit, err := strconv.ParseInt(c.DefaultQuery("limit", "50"), 10, 64)
 	if err != nil || limit > 100 {
 		c.Status(http.StatusBadRequest)
 	}

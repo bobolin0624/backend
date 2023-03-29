@@ -26,10 +26,10 @@ func (im *impl) Create(ctx context.Context, p *model.PoliticianRepr) (int, error
 
 	var id int
 	err = conn.QueryRow(ctx, `
-		INSERT INTO politicians (name, birthdate, avatar_url, sex)
+		INSERT INTO politicians (name, birthdate, avatar_url, sex, current_party_id)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id
-	`, p.Name, p.Birthdate, p.AvatarUrl, p.Sex).Scan(&id)
+	`, p.Name, p.Birthdate, p.AvatarUrl, p.Sex, p.CurrentPartyId).Scan(&id)
 	if err != nil {
 		log.Println(err)
 		return 0, err
@@ -81,7 +81,7 @@ func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name string, birth
 		args = append(args, p.Value)
 	}
 
-	rows, err := conn.Query(ctx, "SELECT id, name, birthdate, avatar_url, sex, created_at, updated_at FROM politicians "+where, args...)
+	rows, err := conn.Query(ctx, "SELECT id, name, birthdate, avatar_url, sex, current_party_id, created_at, updated_at FROM politicians "+where, args...)
 
 	if err != nil {
 		log.Println(err)
@@ -92,7 +92,7 @@ func (im *impl) SearchByNameAndBirthdate(ctx context.Context, name string, birth
 	var ps []*model.Politician
 	for rows.Next() {
 		var p model.Politician
-		err = rows.Scan(&p.Id, &p.Name, &p.Birthdate, &p.AvatarUrl, &p.Sex, &p.CreatedAt, &p.UpdatedAt)
+		err = rows.Scan(&p.Id, &p.Name, &p.Birthdate, &p.AvatarUrl, &p.Sex, &p.CurrentPartyId, &p.CreatedAt, &p.UpdatedAt)
 		if err != nil {
 			log.Println(err)
 			return nil, err
